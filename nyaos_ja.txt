@@ -1,0 +1,2739 @@
+     日本語拡張コマンドラインシェル
+     ┏┓┳┳　┳┏━┓┏━┓┏━┓ 
+     ┃┃┃┗━┫┣━┫┃　┃┗━┓
+     ┻┗┛┗━┛┻　┻┗━┛┗━┛
+           The Free Software
+     Nihongo Yet Another Open Shell
+  Copyright (C) 2001-2013 HAYAMA,Kaoru
+
+目次
+====
+
+    - Nihongo Yet Another Open Shell とは
+    - 実行方法
+    - キーバインド
+    - 内蔵コマンド
+    - マルチステートメント
+    - ！マークによるヒストリ置換
+    - 標準エラー出力のリダイレクト
+    - 逆クォートによる、外部コマンド出力の引用機能
+    - 環境変数参照
+    - 拡張プロンプト
+    - ウインドウタイトル設定
+    - 行の継続
+    - 関数機能
+    - 逆スクロール機能 (Windowsのみ)
+    - エスケープシーケンスエミュレーション (Windowsのみ)
+    - ヒアドキュメント
+    - インラインファイルテキスト
+    - ソースからのビルト
+    - Lua 拡張
+    - 注意事項
+    - ＦＡＱ
+    - 変更履歴
+    - 連絡先
+
+
+Nihongo Yet Another Open Shell とは
+====================================
+
+NYAOS --- Nihongo Yet Another Open Shell は、
+32bit系Windows,OS/2 で動作するコマンドラインシェルです。
+
+特徴として次のようなものがあります。
+
+    - tcsh ライクな編集機能(Ctrl-F/B/A/E等)
+        Ctrl-F,B,A,E,P,N など tcsh で慣れた操作で、編集することが
+        できます。カスタマイズすることも可能です。
+    - 強力なファイル名補完機能
+        基本的に tcsh 準拠な補完ですが、普通の UNIX系シェルとは違い
+            - 大文字・小文字を区別しない
+            - 空白を含むファイル名には引用符を補う
+            - 補完するパス区切り記号(￥or／)を自動判断
+            - コマンド名補完の場合は、実行可能ファイル名のみを候補とする
+        といった Windows 固有のファイルシステムの特徴にあった補完を
+        提供します。
+            例：「cd /prog」→「cd "/Program Files/"」
+            　　「cd \prog」→「cd "\Program Files\"」
+    - 内蔵カラー ls
+    - ヒストリ機能(Ctrl-P)
+        tcsh ライクな行単位のヒストリや、Vzライクな単語単位のヒストリを
+        持っています。また、「!」によるヒストリ参照も「option +history」
+        で有効になります。
+    - エイリアス機能(alias命令)
+        コマンドに別名をつけることができます。
+        (例: alias rm rm -i)
+    - キーカスタマイズ機能(bindkey命令)
+    - 逆クォートによる、外部コマンド出力の引用機能
+    - クリップボードとのアクセスも可能(Ctrl-K,Ctrl-Y)
+    - Lua 5.2.1 による動作のカスタマイズ
+
+NYAOS はレジストリの類を利用しませんので、アンインストールはファイルを
+消すだけとなります。
+
+
+実行方法
+========
+
+NYAOS.EXE を PATH の通ったディレクトリにおいて、実行してください。
+パッケージ添付の設定ファイル _nya は NYAOS.EXE と同じディレクトリに
+配置してください。
+
+OS/2 版の場合、0.9d 以降の emx.dll が LIBPATH の指定するディレクトリ
+にある必要があります。
+
+また、ユーザ定義の設定については、環境変数 USERPROFILE か HOME の指定する
+ディレクトリに _nya という同名の名前で作成してください。
+_nya には、CMD.EXE のコマンドファイルとは次の点が違います。
+
+- # で始まる行はコメント行として無視される
+- CMD.EXE のような１行 if は使えないが、代わりにブロック-if が使える
+- ファイルが「--」で始まる時は、全体が Lua スクリプトと解釈される。
+
+NYAOS.EXE のオプションとして次のようなものがあります。
+
+    -f スクリプトファイル名 引数…
+        ファイル名を内容を読みこんで実行します。_nyaは
+        読みこまないことを除けば、 SHELL 内で source 文を
+        実行するのと同じです。通常、_nya内でしか使えない
+        コマンドも使用できます。実行後、 SHELL は終了します。
+        拡張子が lua,luac,nua の場合は Lua インタプリタとして
+        実行します。"-f" は省略可能です。
+
+    -fx スクリプトファイル名 引数…
+        -f と同じですが、スクリプト中に「#!」と「nya」の両方が含まれる
+        行が現れるまで、無視します。
+
+    -D
+        デバッグフラグを立てます。option +debug と等価です。
+        トレースメッセージが表示されることがあります。
+
+    -Dオプション名=値
+        「option オプション名 値」に相当する処理を行います。
+        option コマンドについては後述の解説を参照ください。
+
+    -r スクリプトファイル名
+        指定したスクリプトファイルを _nya の変わりに読み込みます。
+
+    -e "コマンド"
+        引数内のコマンドを実行します。
+
+    -E "コマンド"
+        引数内のコマンドを Lua インタープリタで実行します。
+
+    -F ファイル名
+        拡張子に関わらず、ファイルを Lua インタープリタで実行します。
+
+    -t ANSIエスケープシーケンスを、エミュレーションをせず、
+       そのまま標準出力へ出力させます。(Windows のみ)
+
+キーバインド
+============
+
+SHELL のキーバインドは次のとおりです。基本的に tcsh のそれを踏襲しています。
+
+    ^A Home     先頭へカーソル移動する               (beginning-of-line)
+    ^B ←       左の文字へカーソル移動する           (backward-char)
+    ^C          入力を破棄して終了する               (abort)
+    ^D          削除/補完候補表示/終了               (erase-list-or-bye)
+    ^E End      末尾へカーソル移動する               (end-of-line)
+    ^F →       右の文字へカーソル移動する           (forward-char)
+    ^H Bs       カーソルの左の文字を削除する         (backward-delete-char)
+    ^I Tab      ファイル名を補完する                 (complete-or-list)
+    ^K          カーソル以降の文字を削除する[*]      (kill-line)
+    ^L          画面をクリアして入力行を再表示する   (clear-screen)
+    ^M Enter    入力を終結する                       (accept-line)
+    ^N ↓       ヒストリを戻す                       (next-history)
+    ^P ↑       ヒストリを呼び出す                   (previous-history)
+    ^R          ヒストリのインクリメンタルサーチ     (i-search)
+    ^T          カーソル直前の2文字を入れ替えます    (swap-char)
+    ^U          先頭からカーソル直前まで削除する[*]  (unix-line-discard)
+    ^V	        続く制御文字を入力する               (quote)
+    ^W          カーソル直前の単語を削除する[*]      (unix-word-rubout)
+    ^Y          記憶した文字列をペーストします       (yank)
+    ^Z          シェルを終了する                     (bye)
+       Del      カーソル上の文字を削除する           (delete-char)
+       Esc      行全体を削除する                     (kill-whole-line)
+    ^O ^TAB     ファイル名を循環補完します。         (complete-next)
+    一般キー    入力文字を挿入する                   (insert-self)
+
+ (Windows版のみ)
+    ^\          IME を ON/OFF する                   (ime-toggle)
+    ^]          逆スクロール機能を起動する           (xscript:start)
+    ^→         カーソルを次の単語の頭に             (forward-word)
+    ^←         カーソルを前の単語の前に             (backward-word)
+ (OS/2版のみ)
+    ^→ ALT-F   カーソルを次の単語の頭に             (forward-word)
+    ^← ALT-B   カーソルを前の単語の前に             (backward-word)
+
+[*] のついたコマンドの削除結果は、削除バッファに保存されます。
+削除バッファの内容は、^Y (yank) で挿入できます。
+
+デフォルトではバインドされていない機能は下記の通りです。
+使用する際は bindkey コマンドでキーに割り当ててください。
+
+    削除/補完候補表示(終了しない)        (erase-or-list)
+    Vzライクなヒストリ参照(過去方向)     (vzlike-previous-history)
+    Vzライクなヒストリ参照(未来方向)     (vzlike-next-history)
+    何もしない                           (none)
+
+^O , ^TAB (complete-next)をタイプすると、変換型補完モードになります。
+このモードでは、次のキーが有効です(機能名は通常モードと共用です)。
+
+    ↓ ^TAB ^O ^N  次候補 (complete-next,(vzlike-)next-history)
+    ↑ ^P          前候補 (complete-previous,(vzlike-)previous-history)
+    ESC ^C     キャンセル (cancel,abort)
+    TAB ^I ^D      リスト (complete,complete-or-list,erase-or-list)
+    Enter ^M         確定 (enter)
+    その他         確定後、キーの機能を実行
+
+候補が一つしかない場合は、モードに入らず、即確定します。
+
+
+内蔵コマンド
+============
+
+下記のコマンドを内蔵しています。また、通常のバッチファイルは
+source コマンドを通さない限り、利用できません。また、別名として、
+前後に __ を付けたコマンド名(alias→__alias__)も利用できます。
+
+alias
+-----
+
+コマンドのエイリアス(別名)を定義/表示します。
+
+- alias エイリアス名 定義内容
+  もしくは
+  alias エイリアス名=定義内容
+
+例) alias ls dir /w
+⇒ ls と入力すると「dir /w」と等価になります。
+
+- alias エイリアス名
+
+エイリアスの現在の定義状況を表示します。
+
+- alias
+
+現在定義されている全てのエイリアスを表示します。
+
+定義内容には次のマクロが使用可能です。
+
+        $*  引数全て
+        $n  n番目の引数
+        $n* n番目以降の引数
+        $$  「$」自体
+        $B  パイプ記号(|)
+        $L  入力リダイレクト記号(<)
+        $G  出力リダイレクト記号(>)
+        $Q  出力引用記号(`)
+        $@  $* と同じだが DOS風表現を UNIX風表現に置換する
+                「/」          ⇒ \
+                単語先頭の「-」⇒ /
+                単語末尾の「/」⇒ \.
+                単語末尾の「\」⇒ \.
+
+マクロを一つも使わない場合、引数は定義内容の後に付加されます。
+
+        定義内容が、二重引用符で始まる場合、
+            - 単独の二重引用符 → 削除する
+            - 連続する二重引用符 → １個の二重引用符
+        へ変換します。これは
+            alias ls "if $1 == ""x"" then ; echo ahaha ; end if"
+        等のように、特殊文字をそのままエイリアス定義に組みこむ際に
+        使用できます。
+
+(注意)
+    マクロを利用する場合、定義内容は二重引用符で囲んでください。
+    囲まないと環境変数とみなされます。
+       × alias foo bar $1 → $1 が空白になってしまう
+       ○ alias foo "bar $1"
+
+bindkey
+-------
+
+キーをカスタマイズします。
+
+    bindkey キー名称 機能名…
+
+キー名称には次のようなものがあります。
+
+    BACKSPACE       CTRL_SPACE
+    CENTER          CTRL_A          CTRL_AT         CTRL_B
+    CTRL_C          CTRL_CENTER     CTRL_D          CTRL_DEL
+    CTRL_DOWN       CTRL_E          CTRL_END        CTRL_F
+    CTRL_F1         CTRL_F10        CTRL_F11        CTRL_F12
+    CTRL_F2         CTRL_F3         CTRL_F4         CTRL_F5
+    CTRL_F6         CTRL_F7         CTRL_F8         CTRL_F9
+    CTRL_G          CTRL_H          CTRL_HOME       CTRL_I
+    CTRL_INS        CTRL_J          CTRL_K          CTRL_L
+    CTRL_LEFT       CTRL_M          CTRL_N          CTRL_O
+    CTRL_P          CTRL_PAD_ASTERISK               CTRL_PAD_MINUS
+    CTRL_PAD_PLUS   CTRL_PAD_SLASH  CTRL_PAGEDOWN   CTRL_PAGEUP
+    CTRL_PRTSC      CTRL_Q          CTRL_R          CTRL_RIGHT
+    CTRL_S          CTRL_SPACE      CTRL_T          CTRL_TAB
+    CTRL_U          CTRL_UP         CTRL_V          CTRL_W
+    CTRL_X          CTRL_Y          CTRL_Z          DEL
+    DOWN            END             ENTER           ESCAPE
+    F1              F10             F11             F12
+    F2              F3              F4              F5
+    F6              F7              F8              F9
+    HOME            INS             LEFT            PAGEDOWN
+    PAGEUP          RETURN          RIGHT
+    SHIFT_F1        SHIFT_F10       SHIFT_F11       SHIFT_F12
+    SHIFT_F2        SHIFT_F3        SHIFT_F4        SHIFT_F5
+    SHIFT_F6        SHIFT_F7        SHIFT_F8        SHIFT_F9
+    SHIFT_TAB       SPACE           TAB             UP
+    ALT_0           ALT_1           ALT_2           ALT_3
+    ALT_4           ALT_5           ALT_6           ALT_7
+    ALT_8           ALT_9           ALT_A           ALT_B
+    ALT_BACKSLASH   ALT_BACKSPACE   ALT_C           ALT_COMMA
+    ALT_D           ALT_DEL         ALT_DOWN        ALT_E
+    ALT_END         ALT_EQUAL       ALT_ESC         ALT_F
+    ALT_F1          ALT_F10         ALT_F11         ALT_F12
+    ALT_F2          ALT_F3          ALT_F4          ALT_F5
+    ALT_F6          ALT_F7          ALT_F8          ALT_F9
+    ALT_G           ALT_H           ALT_HOME        ALT_I
+    ALT_INS         ALT_J           ALT_K           ALT_L
+    ALT_LEFT        ALT_LEFT_BRACKET                ALT_LEFT_QUOTE
+    ALT_M           ALT_MINUS       ALT_N           ALT_O
+    ALT_P           ALT_PAD_ASTERISK                ALT_PAD_ENTER
+    ALT_PAD_MINUS   ALT_PAD_PLUS    ALT_PAD_SLASH   ALT_PAGEDOWN
+    ALT_PAGEUP      ALT_PERIOD      ALT_Q           ALT_R
+    ALT_RETURN      ALT_RIGHT       ALT_RIGHT_BRACKET
+    ALT_RIGHT_QUOTE ALT_S           ALT_SEMICOLON   ALT_SLASH
+    ALT_SPACE       ALT_T           ALT_TAB         ALT_U
+    ALT_UP          ALT_V           ALT_W           ALT_X
+    ALT_Y           ALT_Z           BACKSPACE
+
+ここにないものについては、アスキーコードを10進数で指定できます。
+アスキーコードを持たず、スキャンコードしか持っていないものは、
+スキャンコードに256を足したものを10進数で指定してください。
+
+機能名については、キーの説明の()内の単語を使用してください。
+
+例:
+    bindkey ctrl_h back_and_erase
+    bindkey ctrl_s previous xscript:previous
+
+キーには複数の機能が割り当てられることができます。
+それらのキーは、たたかれる状態(通常行編集時・逆スクロール
+時・履歴参照時)よって、どの機能が使われるかが
+選択されます。
+
+
+cd
+---
+
+通常の cd と同じですが
+
+- ドライブ文字が含まれていたら、そのドライブへ移動する。
+- スラッシュをバックスラッシュと同様に扱う。
+- ディレクトリ名がない場合は、環境変数HOMEの指すディレクトリへ移動する。
+  HOMEが未定義の場合は DOS の cd と同じく、現在のディレクトリを表示します。
+- 末尾に \ をつけていても大丈夫
+- ディレクトリ名のかわりに - (マイナス) を指定すると、直前に実行した
+  cd 一つ前のカレントディレクトリに移動する。
+
+等の違いがあいます。
+
+    > cd [--basedir] ディレクトリ名
+
+オプション --basedir を指定すると、パス名がディレクトリでなかったりして
+移動できない際は、それの親ディレクトリへの移動を試みます。
+
+    (Windowsのみ)
+    > cd ショートカット名.lnk
+
+ショートカットの指すディレクトリへ移動します。拡張子 .lnk は必須です。
+
+
+cls
+---
+
+画面をクリアします。
+
+
+dirs
+----
+
+ディレクトリスタックの内容を表示します。
+
+
+eval コマンド文字列
+-------------------
+
+引数の内容をコマンドとして解釈して、実行します。
+
+
+folder 特殊フォルダ名 本当のディレクトリ名
+------------------------------------------
+
+チルダで始まる特殊フォルダを定義できます。例えば
+
+    folder desktop c:\Windows\デスクトップ
+
+と定義すると、今後、空白文字に続く
+
+    ~desktop
+
+というディレクトリ名は「c:\Windows\デスクトップ」に置換されます。
+Windows 版では、次のフォルダーがデフォルトで定義されています。
+
+    desktop		デスクトップ
+    sendto		送る
+    startmenu		スタートメニュー
+    startup		スタートメニューのスタートアップ
+    mydocuments		マイドキュメント
+    favorites		お気に入り
+    programs		プログラムメニュー
+    program_files	Program Files
+    appdata		アプリケーションデータ
+
+    allusersdesktop	全ユーザのデスクトップ
+    allusersprograms	全ユーザのプログラムメニュー
+    allusersstartmenu	全ユーザのスタートメニュー
+    allusersstartup	全ユーザのスタートアップ
+
+foreach ～ end
+--------------
+
+環境変数に値1,値2を順に代入し、その都度、end まで続く文を繰り返します。
+
+    > foreach 変数名 値1 値2 …
+    > :
+    > end
+
+csh の foreach とほぼ同じですが、
+
+    - 値のリストを括弧で包まない
+    - 繰り返す文の中では、変数は %変数名% で参照する。
+
+点が異なります。なお、NYAOS 1.xx の foreach と違い、入れ子が可能です。
+値n にはワイルドカードが使えます(OS標準のものだけですが)。
+
+history
+-------
+
+今まで入力したコマンドを過去 N 個分、画面に表示します。
+
+    > history [N]
+
+N を省略すると 10 となります。
+
+if
+--
+
+構文１
+    > if 《条件》 コマンド
+
+構文２
+    > if 《条件》 then
+    >  :
+    >[else]
+    >  :
+    >endif
+
+_nya 内でのみ使用できる、ブロック-if です。条件成立時は then 移行の
+ブロックが、不成立時で else移行のブロックが実行されます。
+
+《条件》としては、下記のものが使用できます。条件演算子の前後には一つ以上の
+空白が必要です。
+
+    arg1 == arg2  : 同じ文字列なら真
+    not arg1 == arg2 : 違う文字列なら真
+    arg1 -eq arg2 : 同じ数値なら真
+    arg1 -ne arg2 : 違う数値なら真
+    arg1 -lt arg2 : arg1 < arg2 なら真
+    arg1 -gt arg2 : arg1 > arg2 なら真
+    arg1 -le arg2 : arg1 <= arg2 なら真
+    arg1 -ge arg2 : arg1 >= arg2 なら真
+
+    errorlevel N      : 直前のコマンドのエラー値が N 以上
+    not errorlevel N  : 直前のコマンドのエラー値が N 未満
+
+
+ls [オプション] [ファイル名]
+------------------------------
+
+ファイルの一覧を ls 風に表示します。
+	
+    -a 「.」や「_」で始まるファイル・Hidden属性がついたファイルも表示する。
+    -l ロングフォーマットで表示する。
+    -1 出力先が端末の時も、1行1列のフォーマットで表示する。
+    -x 出力先が端末でない時も、1行n列のフォーマットで表示する。
+    -R 下位ディレクトリも再帰的に出力する。
+    -t 最終更新日時でソートする。
+    -r ソート順を逆にする。
+    -S サイズでソートする。
+    -h ファイルサイズに単位を付けて表示 (1024倍毎に K,M,G…)
+    --si ファイルサイズに単位を付けて表示 (1000倍毎に K,M,G…)
+
+    --color       
+    --color=always  常にカラー出力する 
+    --color=never   カラーを抑制する
+    --color=auto    出力先に応じて、カラー出力を判断する
+
+色については、オプション ls_colors (あるいは 環境変数 LS_COLORS )に
+次のようなフォーマットで定義します。
+
+    option ls_colors x1=v1:x2=v2:x3=v3…
+        OR
+    set LS_COLORS=x1=v1:x2=v2:x3=v3…
+
+    x1	|         意味		|デフォルト
+    ----+-----------------------+----------
+    fi  | 普通のファイル	| 1;37
+    di	| ディレクトリ		| 1;32
+    sy	| システムファイル	| 0;31
+    ro  | 読み取り専用		| 0;34
+    hi	| 隠しファイル		| 1;35
+    ex  | 実行可能ファイル	| 1;33
+    ec	| 初期化コード		| 0
+
+    (例)
+        set LS_COLORS="fi=37;1:di=32;1:sy=31"
+
+lua_e "コード"
+--------------
+
+内蔵 Lua のコードを実行します。
+
+
+open [-/+アクション] [ファイル or ディレクトリ名]
+-------------------------------------------------
+
+ファイルあるいはディレクトリを、アイコンをクリックしたのと同様に開きます。
+
+(Windows)
+    -o +open       デフォルトアプリケーションで開く(デフォルト動作)
+    -e +explore    ディレクトリをエクスプローラで開く
+    -p +property   ショートカットのプロパティを開く
+(OS/2)
+    -o +default    デフォルトアプリケーションで開く(デフォルト動作)
+    -p +settings   プロパティを開く
+       +icon       ディレクトリをアイコン表示で開く
+    -e +tree       ディレクトリをツリービューで開く
+       +details    ディレクトリを詳細表示で開く
+
+option
+------
+
+SHELL の動作を左右するオプション(シェル変数)を設定します。
+これらの変数は，内蔵 Lua から nyaos.option[] というテーブル
+で参照・変更することができます。
+
+    > option オプション名 値
+    あるいは
+    > option オプション名=値
+
+オプション名に値を設定します。
+
+    > option オプション名
+
+現在のオプションの設定状況を全て表示します。
+
+    > option +オプション名
+
+オプション(シェル変数)に空文字列を設定します。
+オプションを単に有効にしたい(値はどうでもよい)場合に使用します。
+
+    > option -オプション名
+
+オプション(シェル変数)を無効にします(unoptionと等価です)。
+
+オプションには今のところ次のようなものがあります。
+
+backquote
+    設定すると、逆クォート(``)で囲まれた部分をコマンドを
+    実行して、標準出力内容と置換します。
+bracexp
+    「A{1,2}B」を「A1B A2B」といった形に展開する
+dots
+    設定すると、「...」→「..\..」,「....」→「..\..\..」
+    といった置換を行います。OS/2 向けの機能です。
+    (Windows では OS がサポートしているので無用)
+glob
+    ワイルドカード展開を行う
+ls_colors
+    ls でカラー出力する際の属性と色との対応を定義します。
+    詳細は ls の項目を参照してください。
+lnkexp (Windowsのみ)
+    TAB補完で、ショートカットをリンク先に自動変換します。
+mineditwidth
+    画面の桁数－プロンプトの文字数が、この値以下になると、
+    プロンプトの直後で改行します。未設定の場合、10桁と等価に
+    なります。
+nullcomplete
+    1文字も入力していない状態での補完を許可します。
+nyatype
+    "NYAOS3K" が設定されます。
+history
+    設定すると、「!」によるヒストリをサポートします。
+histfilesize
+    保存するヒストリの数です。空の場合、全て保存されます。
+prompt
+    プロンプトを設定できます。環境変数より優先されますので、
+    command.com/cmd.exe とは別個のプロンプトを定義できます。
+savehist
+    ヒストリを保存するファイル名を指定します。
+    設定されていない場合は、ディスクへ保存しません。
+term_clear
+    画面をクリアする制御コードを設定します。
+    プロンプトと同様の構文が使えます。
+    無指定の場合 $e[2J と等価となります。
+term_cursor_on
+    カーソル点灯を指示する制御コードを設定します。
+    プロンプトと同様の構文が使えます。
+    無指定の場合 $e[$g5l と等価となります。
+tilde
+    設定すると、外部コマンド実行時においても、~ (チルダ) 文字を
+    環境変数 HOME の内容に置換されます。置換される ~ は空白の
+    直後に存在する、二重引用符に囲まれていないものに限ります。
+    ~ の直後に / が存在する場合は、環境変数 HOME 内の \ を / に
+    変換します。
+uncompletechar
+    補完の際に、空白と同様に扱って欲しい文字を定義できます。
+    ; や = を定義しておくと、環境変数定義の際も補完が効きます。
+width
+    画面の桁数を指定しますが、これで設定すれば、実際に画面が
+    その桁数になるわけではありません。V-Text 等で変更した画面幅
+    を SHELL に通知するためのオプションです。指定しない場合
+    画面幅が80桁と仮定します。
+
+    オプションは起動時に
+        NYAOS -Dオプション名=値
+    のように設定することもできます。
+
+popd
+----
+
+ディレクトリスタックのトップのディレクトリへ移動します。
+
+    > popd
+
+スタックのトップのディレクトリへ移動します。
+
+    > popd +N
+
+スタック N 番目のディレクトリへ移動します。
+
+pushd
+------
+
+    > pushd {-h|-H} {ディレクトリ名|+N}
+
+現在のカレントディレクトリ名をディレクトリスタックに保存し、
+引数のディレクトリに移動します。ディレクトリ名が無い場合は、
+スタックのトップとカレントディレクトリを交換します。
+
+-h
+    スタックが空で、ディレクトリ名が省略された場合
+    「pushd . 」と同じ動作を行います。
+-H
+    スタックに関係なく、ディレクトリ名が省略された場合
+    「pushd . 」と同じ動作を行います。
++N
+    カレントディレクトリ＋ディレクトリスタックを N 回回転させ、
+    結果トップとなったディレクトリをカレントディレクトリとします。
+
+pwd
+---
+
+カレントディレクトリ名を表示します。
+
+set
+---
+
+環境変数を設定します。
+
+    > set 環境変数名=値
+
+CMD.EXE の set と同じです。ダブルクォートはそのまま代入されます。
+
+    > set 環境変数名:=値
+
+環境変数に値を代入しますが、単一のダブルクォートは削除され、連続する二つの
+ダブルクォートは一つのダブルクォートに変換されます。
+
+    > set 環境変数名=
+
+環境変数を削除します。
+
+    > set 環境変数名+=値
+
+環境変数に代入されている値に追加を行います。環境変数の内容は
+「;」で区切られた要素からなる配列と解釈し、要素が重複している
+場合は追加を行いません。また、単一のダブルクォートは削除され、
+連続する二つのダブルクォートは一つのダブルクォートに変換されます。
+
+(例)
+    set PATH=C:\Windows;C:\Borland\bcc55
+    set PATH+=C:\lsic\bin
+    set PATH+="C:\Program Files\bin"
+の結果、PATH は
+    C:\Program Files\bin;C:\lsic\bin;C:\Windows;C:\Borland\bcc55
+になります。一方
+    set PATH=C:\Windows;C:\Borland\bcc55
+    set PATH+=C:\Borland\bcc55
+では
+    C:\Borland\bcc55;C:\Windows
+となります(順番は変わりますが、重複はしません)。
+
+    > set 環境変数-=値
+
++= の逆の働きをします。つまり、要素を除きます。
+
+    (例)
+        set PATH=C:\Windows;C:\Borland\bcc55
+        set PATH-=C:\Windows
+    の結果、PATH は
+        C:\Borland\bcc55
+    になります。
+
+単一のダブルクォートは無視され、連続する二つのダブルクォートは
+一つのダブルクォートと解釈されます。
+
+source
+------
+
+設定ファイル等を読みこみます。
+
+    > source 設定ファイル
+
+BATファイルを普通に実行しても、そのBATファイルが変更した環境変数は
+親プロセスである SHELL に反映しません。環境変数を変更する BAT
+ファイルを実行する際は、「source ファイル名」を実行してください。
+
+拡張子が .lua , .luac の時、あるいは、ファイルの中身が「--」
+(ハイフン二つ)で始まる時、ファイルは Lua スクリプトと解釈されます。
+
+    > source -h ファイル名
+
+ファイルから、ヒストリを読みこみます。
+
+suffix
+------
+
+拡張子に対し、インタープリタ名を関連付けします。
+
+    > suffix 拡張子 インタープリタ名
+    あるいは
+    > suffix 拡張子=インタープリタ名
+
+この拡張子をつけたプログラム名を入力すると、インタープリタ名を
+入力行に補います。インタープリタ名を省略すると、その拡張子に対応付け
+られたインタープリタ名を表示します。全ての引数を省略すると、全ての
+関連付けを表示します。
+
+    例：
+        [C:\usr] suffix rb ruby
+        [C:\usr] hoge.rb
+            ⇒ 「ruby hoge.rb」と入力したのと等価になる。
+
+    - この関連付けは内蔵 Lua から、nyaos.suffix[] というテーブルで
+      参照・変更することができます。
+
+    - suffix命令に与える拡張子には「.」を付けないでください。
+    - Windows の関連付けと、 SHELL の関連付けは関係ありません。
+    - suffix命令で定義された拡張子を持つファイルは、コマンド名
+      補完の候補になります。
+    - インタープリタ名のところは、エイリアスのようなマクロ文字列を
+      書くこともできます。
+
+    例:
+        [c:\usr] suffix lua "lua $0 $*"
+
+unalias
+-------
+
+エイリアスを取り消します。
+
+    > unalias エイリアス名
+
+unsuffix
+---------
+
+拡張子に対するインタープリタ名の関連付けを解除します。
+
+    > unsuffix 拡張子
+
+unoption
+---------
+
+オプションを無効(空)にします。
+
+    > unoption オプション
+
+マルチステートメント
+====================
+
+- 空白＋セミコロン(;)
+
+１行に複数のコマンドを記述できます。
+
+    [C:\]echo ahaha ; echo ihihi
+    ahaha
+    ihihi
+
+優先順位はパイプ記号より下です。したがって、
+
+    [C:\]echo ihihi ; echo ahaha | sort
+
+の出力結果は
+
+    ahaha
+    ihihi
+
+ではなく、
+
+    ihihi
+    ahaha
+
+となります。(sort に流れ込むのは ahaha のみ)
+なお、逆クォート内のコマンドに ; は使えません。
+
+- アンパサント (&)
+
+コマンドをバックグラウンドで実行します。
+UNIX/Linux系の & に動作が近くなっていますので、別のコマンドプロンプト画面を
+開きたい場合は
+
+    cmd /c start コマンド名
+
+と実行してください。
+
+
+！マークによるヒストリ置換
+===========================
+
+「option history 1」を、_nya、あるいはコマンドラインから実行
+すると以後、下記のような置換を入力文字列に対して行います。
+
+        !
+        !!      一つ前の入力文字列へ
+        !n      最初から n 番目に入力文字列へ
+        !-n     n 個前に入力した文字列へ
+        !str    str で始まる最も最近の入力文字列へ
+        !?str?  str を含む最も最近の入力文字列へ
+
+ヒストリ置換には次のような語尾をつけることができます。
+
+        :0      コマンド名を引用する。
+        :m      m 番目の引数だけを引用する。
+        ^       最初の引数だけを抜き出す。
+        $       最後の引数だけを抜き出す。
+        *       全ての引数を引用する。
+
+なお、以上の語尾を ! の直後につけると、直前の入力に対する操作となります。
+
+
+標準エラー出力のリダイレクト
+============================
+
+    2> ファイル名
+        標準エラー出力をファイルにリダイレクトします。
+    2>> ファイル名
+        2> と同じですが、既存ファイルの末尾にリダイレクトします。
+    2>&1
+        標準エラー出力を標準出力と同じ先へ出力します。
+    2>&-
+        標準エラー出力を廃棄します。「2>nul」 と等価です。
+
+    |& コマンド
+        標準出力・標準エラー出力の両方を、コマンドの標準入力へ接続します。
+        「2>&1 | コマンド」と等価です。
+
+ ※ 標準出力・標準エラー出力を同一ファイルにリダイレクトしたい場合は
+        コマンド名 >ファイル名 2>&1
+    と実行してください。
+        コマンド名 2>&1 >ファイル名
+    とすると、ファイル名にリダイレクトされるのは、標準出力だけとなり、
+    標準エラー出力は旧の標準出力先にリダイレクトされてしまいます。
+
+
+逆クォートによる、外部コマンド出力の引用機能
+=============================================
+
+option +backquote 等と設定しておくと、逆クォート(`～`)で囲まれた
+文字列を「外部コマンド」とみなし、その実行したときの標準出力の内容を
+その位置に置換させることができます。
+
+    例：カレントディレクトリ以下の全てのファイルのバックアップをとる
+        option +backquote
+        foreach i `dir /b /s`
+            copy %i% %i%-backup
+        end
+
+本引用機能が有効な場合に、逆クォート自体をコマンド内に記述したい時は
+逆クォートを二つ並べます。
+
+    例：「`」１文字を表示する。
+        option +backquote
+        echo ``
+
+    この機能を off にするには、unoption backquote を実行します。
+
+環境変数参照
+============
+
+環境変数の参照は普通の DOS と同様の %環境変数名% という形式と
+UNIX ライクな $環境変数名 , ${環境変数名} が使えます。
+また、次のような演算子も使用可能です。
+
+    %変数名.defined%  or  ${変数名.defined}
+        オプション定義されていれば 1
+        環境変数定義されていれば   2
+        何も定義されていなければ   0 に置換されます。
+
+    %変数名.length%  or  ${変数名.length}
+        変数の代入されている値の長さに置換されます。
+
+    %変数名.split%  or  ${変数名.split}
+        変数中の ; を空白に置換します。
+            foreach i %path.split%
+                echo %i%
+            end
+        のような使い方を想定しています。
+
+    %変数名/FROM/TO%  or  ${変数名/FROM/TO}
+        変数中の文字列 FROM を TO へ置換します。
+
+拡張プロンプト
+==============
+
+CMD.EXE との違いは次のとおりです。
+
+設定方法
+--------
+
+    (option文による設定)
+        option prompt $e[31;40;1m[$w]$_$$ $e[37;1m
+    (CMD.EXE 互換記述)
+        set prompt=$e[31;40;1m[$w]$_$$ $e[37;1m
+
+    双方ともに設定されている場合は option 文の内容が優先されます。
+
+
+NYAOS の独自コード
+------------------
+
+    $W  カレントディレクトリのうちの最下層の部分
+    $Wn カレントディレクトリのうちの最下層から n 階層以降の部分
+
+使えないコード
+--------------
+
+    (WindowsXP の CMD.EXE にあるもの)
+        $+  PUSHD のディレクトリスタック
+        $M  現在のドライブ文字に関連付けられたリモート名
+    (OS/2 の CMD.EXE にあるもの)
+        $I  ヘルプ行表示
+
+
+Lua による動的プロンプト
+------------------------
+
+    nyaos.prompt という関数を Lua で定義しておくと、
+    実行の度に内容が変わるプロンプトを定義することができます。
+
+        第一引数
+            %PROMPT% の内容が渡されます。
+        第一戻り値
+            nil の時
+                関数の実行結果は無視され、通常通り、%PROMPT% が評価されます。
+            true の時
+                第二戻り値の値を %PROMPT% と同様、マクロ展開して、
+                プロンプトとして表示します。
+            false の時
+                第二戻り値の値を、マクロ展開せずにプロンプトとして表示します。
+        第二戻り値
+            プロンプトとして表示する文字列を返してください。
+
+    (例)
+        lua_e "
+            function nyaos.prompt(p)
+                return true,'('..(nyaos.option.errorlevel or 0)..')\n'..p
+            end
+        "
+        前のコマンドの戻り値をプロンプトに反映させます。
+
+
+ウインドウタイトル
+==================
+
+Windows の場合、プロンプトウインドウのタイトルを Lua関数、環境変数、option
+にて設定することができます。
+
+Lua関数
+-------
+    lua_e "
+        function nyaos.title()
+            return false,'タイトル'
+        end
+    "
+
+false を true にすると、プロンプトと同様のマクロを使用することができます。
+
+
+環境変数
+--------
+    set TITLE=タイトル
+
+option
+------
+    option title タイトル
+
+
+行の継続
+========
+
+改行の直前にキャレット記号(^)を置く事で、コマンドを次の行に継続できます。
+また、二重引用符が行内で閉じていない場合も、コマンドは次の行に継続されていると
+認識されます。
+
+
+関数機能
+========
+
+よく使う、複数の一連のコマンドを１コマンドで実行できるようにしたいとき、
+関数を定義するという方法があります。バッチファイルと違い、メモリ上に記憶
+されますので、高速に起動します。
+
+    関数の定義は、
+            関数名{
+                定義文
+            }
+    という形式で行ないます。
+
+- 関数名と中括弧の間には、空白を入れてはいけません!
+- 関数内では、引数を %1～%9, %* $1～$9 , $* で参照できます。
+- 定義済み関数一覧を見るには「{}」とだけ入力してください。
+- 関数を削除する場合は「関数名{}」と空定義してください。
+
+    (例) 関数を定義する：
+
+        which{
+            foreach dir . ${PATH.split}
+                foreach ext .com .exe .bat .cmd
+                    if exist %dir%\%1%ext% then
+                        echo found %dir%\%1%ext%
+                    endif
+        end
+            end
+        }
+
+    (例) 関数を使用する：
+        [D:nya]which nyados
+        found .\nyados.exe
+        found C:\usr\bin\nyados.exe
+        [D:nya]
+
+逆スクロール機能 (Windowsのみ)
+===============================
+
+WindowsNT/2000/XP のコマンドプロンプト上でのみ利用できる機能で、
+キーボード操作のみで画面上の任意の矩形領域をクリップボードにコピー
+することができます。
+
+Ctrl-↑ あるいは Ctrl-] をタイプすると、選択モードに入ります。
+選択モードでは、次のような操作を行います。
+
+    ← Ctrl-B (xscript:backward)
+        カーソルを左へ移動
+    ↑ Ctrl-P (xscript:previous)
+        カーソルを上へ移動
+    → Ctrl-F (xscript:forward)
+        カーソルを右へ移動
+    ↓ Ctrl-N (xscript:next)
+        カーソルを下へ移動
+    Home Ctrl-A (xscript:head)
+        カーソルを左端へ移動
+    End Ctrl-E (xscript:tail)
+        カーソルを右端へ移動
+    PGUP Ctrl-Z (xscript:previous-page)
+        カーソルを1ページ分上へ移動
+    PGDN Ctrl-V (xscript:next-page)
+        カーソルを1ぺージ分下へ移動
+    Ctrl-Home (xscript:heaven)
+        カーソルを最も過去の行へ移動
+    Ctrl-End (xscript:earth)
+        カーソルを最も最近の行へ移動
+    Shift
+        矩形選択
+    Enter  (xscript:copy)
+        矩形領域をクリップボードに転送し、選択モードを終了
+    Escape (xscript:leave)
+        選択モード終了
+
+本キーバインドは、bindkey コマンドで変更可能です。
+
+    (例)
+        bindkey CTRL_E xscript:previous
+        bindkey CTRL_S xscript:backward
+        bindkey CTRL_D xscript:forward
+        bindkey CTRL_X xscript:next
+
+
+エスケープシーケンスエミュレーション (Windowsのみ)
+==================================================
+
+WindowsNT/2000/XP のコマンドプロンプトでは通常エスケープシーケンス
+による画面制御はできませんが、NYAOS 内の内蔵コマンドとプロンプト
+に限っては、NYAOS 自体がエミュレーションを行い、次のコードを解釈
+します。
+
+        ESC [<ps>;…;<ps>m  文字の属性制御
+           <ps> 属性      <ps> 属性       <ps> 属性
+           -----------------------------------------------------------
+            30 前景色：黒  40 背景色：黒   0  初期状態に戻す
+            31 前景色：赤  41 背景色：赤   1  高輝度
+            32 前景色：緑  42 背景色：緑   39 前景色をデフォルトに戻す※
+            33 前景色：黄  34 背景色：黄   49 背景色をデフォルトに戻す※
+            34 前景色：青  44 背景色：青
+            35 前景色：紫  45 背景色：紫
+            36 前景色：水  46 背景色：水
+            37 前景色：白  47 背景色：白
+            
+        ESC [2J             画面クリア
+        ESC [>5l            カーソルを表示する
+
+        ※ Windows のみ。OS/2 では別の意味になる
+
+プロンプトでは ESC コードは「$e」と表現し、その他のコマンドでは
+Ctrl-V ESC で入力してください。
+
+
+ヒアドキュメント
+================
+
+外部コマンドの標準入力に与える文字列を、コマンドソースの次の行以降に
+記述できます。
+
+        コマンド <<終端キーワード
+            ドキュメント(1行目)
+                    :
+            ドキュメント(n行目)
+        終端キーワード
+
+ここではドキュメントの内容が一時ファイルに出力され、そのファイルへの
+読み込みに標準入力がリダイレクトされます。
+
+終端キーワードを二重引用符で「囲まない」と、ドキュメント内の
+%～% といった文字列を環境変数とみなして、展開されます。
+
+
+インラインファイルテキスト
+==========================
+
+ヒアドキュメントと似ていますが、標準入力が切り替わるのではなく、
+テンポラリに作成されたファイルの名前がコマンドに渡されます。
+
+        コマンド <=終端キーワード
+            ドキュメント(1行目)
+                    :
+            ドキュメント(n行目)
+        終端キーワード
+
+インラインファイルテキストを駆使すると、一つの .ny ファイルに
+スクリプトとデータをまとめることができます。
+
+        perl <=__SCRIPT__ <=__DATA__
+        while( <> ){
+            print "date=$_";
+        }
+        __SCRIPT__
+        データその１
+        データその２
+        データその３
+        __DATA__
+
+ソースからのビルト
+==================
+
+実行ファイルの生成には次のツールが必要です。
+
+    (Windows)
+        - mingw32-gcc.exe (GCC) 3.4.5
+        - Lua 5.2.1
+    (OS/2)
+        - emx/gcc 0.9d FIX 3
+        - GNU Make
+        - Lua 5.2.1
+
+次の手順でビルトします。
+
+    (1) Lua をソースビルドする
+            cd /path/to/lua-5.2.1
+            make generic
+
+    (2) NYAOS 本体をビルドする
+            cd /path/to/nyaos3k
+            make LUAPATH=(Luaのパス)
+
+        nyaos3k と Lua が隣接するディレクトリにある場合は
+        LUAPATH の指定は不要です。
+
+
+Lua 拡張
+========
+
+内蔵コマンド lua_e の中では、通常の lua ライブラリの他に
+次のようなオブジェクト・関数を利用することができます。
+
+テーブル系オブジェクト(連想配列系)
+----------------------------------
+
+    - nyaos.alias
+    - nyaos.option
+    - nyaos.suffix
+    - nyaos.folder
+    - nyaos.functions
+    - nyaos.argv
+
+alias/option/suffix/folder/関数 の定義、argv(nyaos起動時のパラメータ)を
+格納しているテーブルオブジェクトです。functions 以外は追加・変更・削除が
+可能です。
+
+    lua_e "
+        nyaos.alias['cp'] = 'cmd /c copy'
+        print('cp='..nyaos.alias['cp'])
+        for key,val in pairs(nyaos.alias) do
+            print(key..'='..val)
+        end
+    "
+
+テーブルオブジェクト(数値配列系)
+--------------------------------
+
+    - nyaos.history
+    - nyaos.dirstack
+
+ヒストリーの内容、ディレクトリスタックを保持している配列的なテーブルです。
+他のテーブル系オブジェクトとほぼ同じですが、
+    - 数値しか、引数にとれない。
+    - 次のようなメソッドがある
+などの違いがあります。
+
+    全体の走査
+        for i,e in ipairs(nyaos.history) do print(i,e) end
+        for i=1,#nyaos.history do print(i,nyaos.history[i]) end
+    末尾への追加
+        nyaos.history:add('hogehoge')
+        nyaos.history:push('hogehoge')
+    末尾の要素の削除(と取り出し)
+        nyaos.history:drop()
+        print( nyaos.history:pop() )
+    先頭要素の取り出し
+        print( nyaos.history:shift() )
+    要素数確認
+        print( #nyaos.history )
+        print( nyaos.history:len() )
+
+
+コマンドラインからの Lua 関数の直接コール
+-----------------------------------------
+
+テーブル nyaos.command , nyaos.command2 に定義した関数は、
+コマンドラインからコマンドとして呼び出すことができます。
+
+(1) nyaos.command.COMMANDNAME
+        COMMANDNAME X Y Z > foo.txt
+    と実行されたコマンドは
+        nyaos.command.COMMANDNAME('X','Y','Z')
+    と呼び出され、標準出力は foo.txt へリダイレクトされます。
+
+(2) nyaos.command2.COMMANDNAME
+        COMMANDNAME X Y Z > foo.txt
+    と実行されたコマンドは
+        nyaos.command2.COMMANDNAME('X Y Z > foo.txt')
+    と呼び出されます。標準出力の出力先は変わりません。
+
+関数の戻り値は、次のルールでコマンドの戻り値(%errorlevel%)に置き換わります。
+    数値  ⇒ そのまま、戻り値になります。
+    false ⇒ 1
+    true,nil,その他 ⇒ 0
+
+
+コマンドラインフィルター
+------------------------
+
+ユーザの入力を NYAOS が解釈する前に、Lua で加工することができます。
+
+    lua_e "
+        function nyaos.filter.foo(cmdline)
+            return cmdline:gsub('%%(%b())',function(m)
+                return loadstring('return '..m)()
+            end)
+        end
+    "
+
+このようにテーブル nyaos.filter の中に関数を定義すると、%(数式) を
+結果にコンバートするといったことができるようになります。
+関数は辞書順に呼び出されます。
+(なお、互換性のため、nyaos.filter 自体に関数を代入しても動作します)
+
+    [c:nyaos3k]
+    $ echo %(1+2+3)
+    6
+
+nyaos.filter の他に nyaos.filter2 というフックもあります。
+こちらは、エイリアスの展開・インタープリタ名の挿入がされた後の
+文字列がフィルター対象となります。
+
+
+外部コマンド呼び出し前フック
+----------------------------
+
+nyaos.filter3.xxxxx (xxxxx は任意) という関数を定義しておくと、外部コマンド
+を呼ぶシステムコール直前に、呼び出しパラメータを加工することができます。
+
+nyaos.filter3.xxxxx はコマンド名とフルコマンドラインの二つをパラメータとして
+受け取ります。これを加工して、戻り値として二つを返すことでシステムコール
+(Windows だと CreateProcess、OS/2 だとDosExecPgm)のパラメータを差し替えるこ
+とができます。(戻り値が二個無い場合は、差し替えは行われません)
+
+以下は、#! (shebang) を実現するための定義例です。
+
+    function drop_first_token( s )
+        for i=1,string.len(s) do
+            if string.sub(s,i,i) == ' ' then
+                return string.sub(s,i)
+            end
+        end
+        return ''
+    end
+
+    function nyaos.filter3.shebang( name , param )
+        local suffix = string.lower( string.sub( name , #name - 3 ) )
+        if suffix ~= '.exe' and suffix ~= '.com' then
+            local fd=io.open( name , 'r' )
+            local line=fd:read()
+            fd:close()
+            if string.sub(line,1,2)=='#!' then
+                local interpretor = string.sub(line,3)
+                local new_param = interpretor .. ' ' .. name .. ' ' .. drop_first_token( param )
+                return interpretor , new_param
+            end
+        end
+    end
+
+
+キーボードフック
+----------------
+
+nyaos.keyhook.xxxxx という関数を定義しておくと、ユーザのキータイプ毎に
+呼び出します
+
+    lua_e "
+        function nyaos.keyhook.date(t)
+            if t.key == nyaos.key.F11 then
+                return os.date('%Y%m%d')
+            end
+        end
+        function nyaos.keyhook.time(t)
+            if t.key == nyaos.key.F12 then
+                return os.date('%H%M%S')
+            end
+        end
+    "
+
+例では、F11 を押すと日付が、F12 を押すと時刻が挿入されます。
+
+関数 nyaos.keyhook.xxxxx の仕様は次の通りです。
+
+    * 引数
+          o t.key : キーコード
+          o t.text : コマンドラインテキスト全体
+          o t.pos : カーソルのバイト位置
+    * 戻り値
+          o nil : 何もしない(nyaos.keyhook が無かったかのように振舞う)
+          o string : カーソル位置に文字列を挿入する
+          o integer : キーコードと解釈して実行する。
+          o true : ENTER が入力されたのと同様に入力を終結する。
+          o false : Ctrl-C が入力されたのと同様に入力を破棄して、終結する。
+          o テーブル：含まれる各要素を評価します。
+
+キーコード定数
+--------------
+
+nyaos.keyhook のために nyaos.key という定数テーブルを用意しています。
+次のコードで内容を確認できます。
+
+    lua_e "
+        for key,val in pairs(nyaos.key) do
+            print('nyaos.key.'..key..'='..val)
+        end
+    "
+
+終了時フック
+------------
+
+nyaos.goodbye というテーブルの中に関数を定義しておくと、
+NYAOS 終了時に呼び出されます。
+
+    lua_e "nyaos.goodbye.message = function() print 'SAYONARA' end"
+
+
+拡張補完
+--------
+
+nyaos.complete で、NYAOS の補完機能を自由に再定義できます。
+
+    function nyaos.complete( BASESTRING , POS , MISC )
+            :
+        return LIST
+    end
+
+BASESTRING : 被補完文字列
+    TAB がタイプされた時に NYAOS が補完すべきと判断した範囲の
+    文字列です。これを元に補完候補を作成してください。
+
+POS : 被補完文字列の画面上での開始位置
+    コマンドライン上での basestring の位置です。0 の時は、
+    ファイル名だけでなく、コマンド名も候補に入れるなど
+    挙動を変える場合に使います。
+
+MISC : 補足情報
+    補足的な情報を格納したテーブルです。
+        MISC.text   : 現在のコマンドラインの全文字列
+        MISC.cursor : カーソルの桁(byte)位置
+
+LIST : 追加する補完候補が入ったテーブル
+
+    LIST の各要素 LIST[n] は、テーブルあるいは文字列を格納します。
+    テーブルの場合は:
+        LIST[n][1] には、実際に補完するための文字列を
+        LIST[n][2] には、リスト表示のための文字列
+        とします。
+    文字列の場合は:
+        LIST[n] に直接、実際に補完するための文字列を格納してください。
+
+例：
+    lua_e "
+        function nyaos.complete(basestring,n)
+            local list = nyaos.default_complete(basestring,n)
+            table.insert( list , '127.0.0.1' )
+            table.insert( list , 'localhost' ) 
+            return list
+        end
+    "
+
+    nyaos.default_complete は、NYAOS のデフォルトの補完処理を行う
+    組込み関数です。これの返す補完候補に「127.0.0.1」「localhost」
+    といったホスト名を追加しています。
+
+    nyaos.default_complete の返す値は、必ず
+
+        {
+            { "パス全体1","ディレクトリ部分を除いたファイル名1" } ,
+            { "パス全体2","ディレクトリ部分を除いたファイル名2" } ,
+            { "パス全体2","ディレクトリ部分を除いたファイル名3" } ,
+                :
+        }
+
+    となります。nyaos.default_complete は第三引数(補足情報)を必要としません。
+
+
+ツール関数
+----------
+
+NYAOS の直接の動作には影響しませんが、ツールとして次のような関数を提供しています。
+
+* nyaos.create_object - COMオブジェクトを新規作成する(Windowsのみ)
+
+    local word=nyaos.create_object("Word.Application")
+    word.Visible = true
+    word.documents:Add()
+    word.Selection.Font.Size = 28
+    word.Selection:typetext("あはは")
+
+* nyaos.get_active_object - 起動済みのCOMを呼び出す(Windowsのみ)
+
+    local word=nyaos.get_active_object("Word.Application")
+    word:Quit()
+
+* COMObject.__const__ - COM よりの定数を読み込む(Windowsのみ)
+
+    local excel = nyaos.create_object('Excel.Application')
+    for key,val in pairs(excel.__const__) do
+        print(key .. "=>" .. val , type(val))
+    end
+
+* COMObject:__iter__ - COM のコレクションの各要素を列挙する(Windowsのみ)
+
+    local shell = nyaos.create_object("WScript.Shell")
+    for e in shell.SpecialFolders:__iter__() do
+        print(e)
+    end
+
+* COMObject:__put__ - プロパティーを設定する(Windowsのみ)
+
+    local shell=nyaos.create_object("WScript.Shell")
+    local sysEnv=shell:Environment("System")
+    -- instead of sysEnv:Item("VARNAME") = "VALUE"
+    sysEnv:__put__("Item","VARNAME","VALUE")
+
+* nyaos.getkey - 一文字キー入力を行う
+
+    lua_e "print(nyaos.getkey())"
+
+
+* nyaos.rcfname - 現在実行中の _nya ファイル名
+
+    print('Loading ' .. nyaos.rcfname)
+
+* nyaos.pid - 現在実行中の NYAOS のプロセスID
+
+* nyaos.version - NYAOS のバージョン文字列
+
+* nyaos.exec - NYAOS コマンドの呼び出し
+
+    lua_e "nyaos.exec('ls -l')"
+
+NYAOS のコマンドラインを実行します。
+戻り値として、実行ステータスを返します。
+(CMD.EXE で言うところの errorlevel 相当)
+
+* nyaos.eval - NYAOS コマンドの呼び出しと出力結果の引用
+
+    lua_e "
+        local quote=nyaos.eval('ls -1')
+        for fn in string.gmatch(quote,'[^\n]+') do 
+            print(fn) 
+        end
+    "
+
+NYAOS のコマンドラインを実行し、標準出力に出力されるものを戻り値として
+返します。NYAOS 本体の逆クォートと同じですが、空白を縮めるなどの処理は
+行ないません。
+
+何らかのエラーが発生した時は、nil とエラーメッセージを返します。
+
+* nyaos.access - ファイルの存在チェック
+
+    lua_e "print( nyaos.access('_nya',0) )"
+
+* nyaos.write - エスケープシーケンスエミュレーション付き io.write
+
+    lua_e "nyaos.write('\027[32mHOGE\n')"
+
+例では、緑色で HOGE を表示します。
+
+* nyaos.putenv - 環境変数に値をセットします。
+
+    lua_e "nyaos.putenv('FOO','3')"
+
+第二引数に nil を与えると、環境変数を消去します。
+
+* nyaos.filefind - ディレクトリ情報読み取り
+
+    lua_e "
+      for info in nyaos.filefind('c:/*') do
+        print( ('%s%s%s%s %12d %04d/%02d/%02d %02d:%02d:%02d %s'):format(
+                    info.directory and 'D' or '-' ,
+                    info.hidden    and 'H' or '-' ,
+                    info.system    and 'S' or '-' ,
+                    info.readonly  and 'R' or '-' ,
+                    info.size ,
+                    info.year , info.month , info.day ,
+                    info.hour , info.minute , info.second ,
+                    info.name ) )
+      end
+    "
+
+* nyaos.dir - ディレクトリ情報読み取り(簡易版)
+
+    lua_e "
+        for fn in nyaos.dir('.') do
+            print(fn)
+        end
+    "
+
+* nyaos.stat - ファイル情報読み取り
+
+    lua_e "stat=nyaos.stat('_nya') ; print( stat.size )"
+
+    ファイルが存在しない場合は nil が返ります。
+
+* nyaos.chdir - ディレクトリ移動
+
+    lua_e "status,errmsg = nyaos.chdir('HOGE')"
+
+    status に成否(0:成功,not 0:失敗)
+    errmsg にメッセージが入ります。
+
+* nyaos.mkdir - ディレクトリ作成
+
+    lua_e "status,errmsg = nyaos.mkdir('HOGE')"
+
+    status に成否(0:成功,not 0:失敗)
+    errmsg にメッセージが入ります。
+
+* nyaos.rmdir - ディレクトリ削除
+
+    lua_e "status,errmsg = nyaos.rmdir('HOGE')"
+
+    status に成否(0:成功,not 0:失敗)
+    errmsg にメッセージが入ります。
+
+* nyaos.currentdir - カレントディレクトリを取得
+
+    lua_e "print(nyaos.currentdir())"
+
+* nyaos.sub - string.sub の DBCS 対応版
+
+    $ lua_e "print(nyaos.sub('あいうえお',3,-2))"
+    うえ
+
+* nyaos.len - string.len の DBCS 対応版
+
+    $ lua_e "print(nyaos.len('あiいuうえooお') )"
+
+注意事項
+========
+
+- バッチファイル内でカレントディレクトリ・環境変数の変更を行っても、
+  呼び出し元の NYAOS には反映されません。
+- source コマンド経由でバッチファイルを実行した場合は、カレントディ
+  レクトリ・環境変数の変更は呼び出し元にも反映されます。
+- _nya に書いたコマンドについては、source で実行したのと同じ
+  扱いとなります。
+- プロンプトが長くて、編集に必要な桁数が無い場合は、プロンプト表示後、
+　自動で改行します。
+- エイリアス名・拡張子名ともに大文字・小文字を区別しません。
+
+
+ＦＡＱ
+======
+
+アイコンへドロップしたフォルダーから起動させたい
+    _nyaに一行「if not "%1" == "" cd --basedir "%1"」を追加し、
+    SHELL を送るメニューに入れてみてください。送ったディレクトリを
+    カレントディレクトリとして SHELL を起動させることができます。
+    また、ファイル名を送ると、そのファイルのあるディレクトリをカレント
+    ディレクトリにできます。
+
+拡張子 .jar もコマンド名補完の対象にしたい
+    「suffix jar start」あるいは「suffix jar java -jar」を
+     _nya内に加えてください。
+
+SET 文中で、補完が効きません。
+    「option uncompletechar =;+」を _nya 内に加えてみて
+    ください。ディレクトリ名が空白以外でリストされているときでも、
+    ファイル名補完が聞きます。
+
+空白を含むコマンド名を使うエイリアスが定義できない。
+    二重引用符を下記のように使用してやる必要があります。
+        alias foo """C:\Program Files\bar\foo.exe"" -hoge"
+    などと定義してください。
+
+pushd で引数を省略したときに「pushd .」になるようにしたい
+    alias pushd "pushd -H" と別名を定義してください。
+
+%PATH.split% が空白になる場合があります。
+    外部コマンド中の %～% では、これらの拡張機能が使えません。m(_ _)m
+
+プロンプトや echo コマンドではエスケープシーケンスが使えるのに
+外部コマンドでは文字化けします。
+    NYAOS エスケープシーケンスをエミュレーションしていますが、
+    これは外部コマンドに及ぶものではありません。
+
+dir/w がエラーになります
+    内部的に dir\w に変換されているためです。
+        alias dir\w dir /w
+    という一文を _nya に入れることで回避できます。
+
+
+変更履歴
+========
+
+3.3.8_0 (2013/05/03)
+    - bindkey 等で CTRL_LEFT,CTRL_RIGHT 等一部のキーに機能を設定できなかった
+      不具合を修正
+    - nyaos.keyhook に登録されている関数が return nil を実行すると、一般のキー
+      入力が不能に陥ってしまう不具合を修正
+    - Shift + TAB の bindkey で使うキー名称を BACKTAB から SHIFT_TAB へ変更
+    - Lua関数 nyaos.currentdir() を実装
+    - ls -l のファイルサイズの幅が 8 桁固定だと、MB とか GB なファイルがある
+      と表示が乱れるので動的に幅を変更 ※
+    - ls にオプション -h , --si を追加 ※
+    (※ Akinori Hattori氏コードをマージ)
+
+3.3.7_1 (2013/04/23)
+    - x: によるドライブ移動で、ウインドウのタイトルバーにカレントドライブ
+      とカレントディレクトリが反映されない不具合を修正
+
+3.3.7_0 (2013/03/31)
+    - COMObject:Item("key")=val ができないので、かわりに
+      COMObject:__put__("Item","key",val) を用意
+    - COMオブジェクトのコレクションの各要素を for e in OBJ:__iter__() 
+      で列挙できるようにした。(pairs でも出来ていたのをメソッド名を付与)
+    - nyaos.const_load(COMObject)を COMObject.__const__ と書けるようにした。
+      (nyaos.const_load の方はドキュメントより削除)
+
+3.3.6_1 (2013/03/01)
+    - リダイレクトすると、ls -l がロングフォーマットにならない不具合を修正
+    - CON や PRN をコマンド名として実行すると落ちる不具合を修正
+
+3.3.6_0 (2013/02/24)
+    - 内蔵 Lua の文字列リテラルを DBCS 対応化
+    - nyaos.sub , nyaos.len 追加
+    - nyaos.splitknj 削除
+    - _nya の中身を機能単位で分割して、_nya.d\* へ移動
+    - [OS/2] PMアプリが実行できない問題が見付かったので、emx.dll を
+      再び使用するようにした。
+
+3.3.5_1 (2013/02/18)
+    - Windows8 で日本語が入力できなかった問題を修正
+
+3.3.5_0 (2013/02/16)
+    - キャレット(^)を CMD.EXE 同様にエスケープ文字として認識するようにした
+    - for,assoc を標準 _nya で関数定義
+    - コマンドラインが111文字以上の時にCreateProcess に失敗すると、エラー
+      メッセージが「Too long command line, or bad command or file name.」
+      になる謎仕様を削除
+    - goto が機能していなかった不具合を修正
+    - 小文字の関数しか呼べない不具合を修正
+    - `command(s) | nyaos.exe' の時に、メッセージを抑制するようにした。
+
+3.3.4_3 (2013/02/09)
+    - cd SHORTCUT.lnk の時に、ディレクトリ名がショートファイル名に変わって
+      しまう不具合を修正(WINDOWS)
+    - cd の後にショートカット名をファイル名補完できなかった問題を修正(WINDOWS)
+    - 全補完候補の共通長と補完前文字列の長さがちょうど同じ時に、ファイルの
+      大文字・小文字の自動補正が効かなかった不具合を修正
+    - _nya にショートカットを作成するコマンド(lnk)を追加(WINDOWS)
+    - 内蔵Luaで「pairs(COMのコレクションオブジェクト)」を出来るようにした(試作)
+
+3.3.4_2 (2013/02/02)
+    - Lua で COM を呼ぶと、クラッシュする不具合を修正(Windows)
+    - 実行ファイルのプロパティーでバージョンを確認できるようにした(Windows)
+
+3.3.4_1 (2013/01/19)
+    - 一部の Windows 7 環境で ls , プロンプトの日本語が化ける問題を修正
+
+3.3.4_0 (2012/10/14)
+    - ウインドウタイトルを変更できるようになった(Windowsのみ)
+      (@nocd5 氏コードマージ)
+    - 内蔵 cls コマンド
+    - カレントディレクトリ=%USERPROFILE% の時に、同じ_nyaを2回読み込まない
+      ようにした
+    - g++ 4.7.0 警告対応
+
+3.3.3_1 (2012/06/18)
+    - 「lua_e "print(io.read())"」という内容のファイルを nyaos -f で
+       実行するとフリーズする問題を修正 (Windows のみ)
+
+3.3.3_0 (2012/06/03)
+    - cd , pushd で、ディレクトリだけを補完させるようにした。
+    - COM の定数読み込みを行う、nyaos.const_load を実装
+    - バッチファイル実行時に、実行ファイル名と引数の両方をダブルクォート
+      で囲むと正しく実行できない問題を修正(例: "foo.bat" "arg1")
+
+3.3.2_0 (2012/04/30)
+    - 内蔵Luaから、COMオブジェクトを呼び出せるようにした(Windowsのみ)
+      (nyaos.create_object , nyaos.get_active_object)
+    - 「nyaos -f foo.lua」を「nyaos foo.lua」と書けるようにした。
+
+3.3.1_0 (2012/03/02)
+    - alias の置換結果に suffix で置換できるようにした。
+    -「set foo:="ahaha "" ihihi"」で $foo が「ahaha " ihihi」になるようにした。
+       (従来の「set foo="ahaha "" ihihi"」では「"ahaha "" ihihi"」のまま)    
+    -「set foo= ;set foo+="a""b"」で $foo が「ab」になっていたのを「a"b」に
+      なるようにした。
+    - 存在しないコマンド foo に対して「echo ahaha | foo」を実行した時に、
+      「foo: No such file or directory」の他に「foo: Bad file descriptor」
+      まで表示されてしまう点を修正。
+    - 内部処理でのパイプラインの分割・再統合で無駄な空白追加/削除を省いた。
+    - Lua関数: nyaos.putenv を追加
+
+3.3.0_3 (2012/02/11)
+    - 実行ファイルをチルダ付きパスで呼び出す時、ホームディレクトリ名に
+      含まれる空白を、パラメータ区切りと誤認識してしまう問題を修正
+
+3.3.0_2 (2012/01/30)
+    - option savehist 時にファイルが存在しない時、エラーを出さないようにした。
+    - ウインドウを閉じた場合もヒストリ保存や Lua関数 nyaos.goodbye.* を呼び出
+      せるようになった。
+    - option uncompletechar に含まれる文字がディレクトリ名の漢字の2バイト目
+      にあった場合にファイル名補完で不要な二重引用符が足されてしまう不具合を
+      修正
+    - mklink を CMD.EXE 経由で呼び出すよう alias 定義した(_nya)
+
+3.3.0_1 (2012/01/07)
+    - 「alias foo=bar」といった bash 互換文法を alias, suffix, option で
+      使えるようになった。
+    - nyaos.eval で 32767文字を越える文字列を扱うと動作がおかしくなる問題を
+      修正
+
+3.2.0_1 (2012/01/07)
+    - nyaos.eval で 32767文字を越える文字列を扱うと動作がおかしくなる問題を
+      修正
+
+3.3.0_0 (2012/01/01)
+    - Lua 5.2 対応
+    - NYAOS 独自の pairs , ipairs を削除
+    - nyaos.bitand、bitor、bitxor、rshift、lshiftを削除
+
+3.2.0_0 (2011/09/11)
+    - ヒストリ番号が表示されていなかったのを修正
+    - _nya に環境変数を設定するバッチを読み込みコマンド cmdsource を定義
+    - _nya に英語の説明を追加
+
+3.1.8_0 (2011/07/10)
+    - OS/2 で emx.dll を必要としないようにした。
+
+3.1.7_2 (2011/06/30)
+    [蟲繕]
+    - nyaos.history が <NnObject> しか返さなくなっている不具合を修正
+    - nyaos.history:add が機能しなくなっていた不具合を修正
+
+3.1.7_1 (2011/06/13)
+    [蟲繕]
+    - 日時が付いていない履歴の順序が崩れていた。
+    - 同じ行がある場合一つにまとまってしまっていた。
+    - 履歴の数が多い場合(4万件位)に終了に時間がかかっていた。
+    (wantora氏のパッチを採用)
+
+3.1.7_0 (2011/06/05)
+    - 履歴に日時を記録するようにした。
+    - 履歴を保存する際(option savehist ファイル名)、保存済みの履歴と
+      時系列順にマージするようにした。
+
+3.1.6_1 (2011/05/24)
+    - Windows で \ が書き込み不可の時に、逆クォートを使うと
+      落ちてしまう不具合を修正
+
+3.1.6_0 (2011/04/30)
+    - Windowsのエスケープシーケンスエミュレーションで
+          ESC[39m (文字色をデフォルトに戻す)
+          ESC[49m (背景色をデフォルトに戻す)
+      に対応(@mattn_jp殿よりのパッチを採用)
+    - 関数 nyaos.prompt をサポート
+
+3.1.5_0 (2011/01/24)
+    - 変数の置換構文 %VAR/FROM/TO% , ${VAR/FROM/TO} サポート
+
+3.1.4_1 (2010/12/20)
+    - nyaos -E "print(nyaos.version,nyaos.argv[0])" が正しく動かなかった
+      不具合を修正(lua_e では正しく動いていた)
+
+3.1.4_0 (2010/12/11)
+    - TABキーの連続押下で深い階層ディレクトリの補完ができなかった点を解消
+    - nyaos.hook.xxxxx の戻り値の中にテーブルが含まれていたら、その要素も
+      解釈するようにした。
+    - nyaos.version にバージョン, nyaos.argv[0] に実行ファイルのパスを格納
+      するようにした。
+
+3.1.3_0 (2010/11/24)
+    - インクリメンタルサーチで←,→,^B,^F,Enter でしかサーチモードを解除でき
+      なかったのを修正
+    - nyaos.write 実装(エスケープシーケンスエミュレーション付き io.write)
+    - %PROMPT% で、$Wn をサポート
+
+3.1.2_0 (2010/11/11)
+    - nyaos.keyhook をテーブル化した。
+    - nyaos.filter3.xxxxx の呼び出しを辞書順にした。
+
+3.1.1_0 (2010/10/24)
+    - nyaos.filter3.xxxxx を実装。
+    - No Such file or directory の前にファイル名を表示するようにした。
+
+3.1.0_1 (2010/09/11)
+    - 3.0.0_0～3.0.0_1 間と同じ修正
+
+3.1.0_0 (2010/08/02)
+    - 日本語以外の全DBCSもサポート
+    - 標準出力が端末でない時、ls は ls -1 として動作するようにした。
+    - ls に -x オプションを追加
+    - Lua関数: nyaos.splitknj() 追加
+
+3.0.0_1 (2010/09/11)
+    - アンダスコアの含まれた環境変数が $ で展開されない問題を修正
+    - 拡張子の無いファイルが実行対象とみなされて、エラーになる不具合を修正
+    - .\foo と相対パスを指定していても、PATH を検索してしまっていた問題を修正
+    - 最新の MinGW(20100831) で、libstdc++ が動的リンクされないようにした
+    - 最新の MinGW(20100831) で発生する Warning を解消 
+      (history.cpp,keybound.cpp)
+
+3.0.0_0 (2010/07/15)
+    - コマンド解釈の優先度を
+            エイリアス→内蔵コマンド→Luaコマンド2(nyaos.command2)
+            →Luaコマンド1(nyaos.command)→関数→外部コマンド
+      から
+            エイリアス→関数→Luaコマンド2(nyaos.command2)
+            →Luaコマンド1(nyaos.command)→内蔵コマンド→外部コマンド
+      に変更した。
+    - 関数を削除できるようにした。
+    - 追加：nyaos.stat , nyaos.filefind , nyaos.mkdir , nyaos.rmdir
+
+2.99_0 (2010/07/03)
+    - nyaos.filter.XXXXXX を XXXXXX の辞書順で呼び出すようにした。
+    - nyaos.pid で自分のプロセスIDを参照できるようにした。
+    - suffix 文でも alias 文同様のマクロを使えるようにした。
+    - -f の引数が .lua / .luac の時、Luaインタプリタで実行するようにした。
+    - nyaos.goodbye をテーブルとしても解釈するようにした。
+    - インクリメンタルサーチ サポート(craftware さんパッチ取り込み)
+    - アプリ名を OSes Shell から Open Shell にし「3000」を除いた。
+    - nyaos.functions を読み取り専用の Lua テーブルとして追加
+
+2.98_0 (2010/06/11)
+    - option +glob でワイルドカード展開をシェル側でするようにした。
+    - 拡張子 CMD/BAT を省略できるようにした。
+    - nyaos.command/command2 で定義したコマンドもコマンド名補完の対象に入れた。
+    - nyaos.folder を追加
+    - echo "`dir | sort`" は出来ていたのに、echo `dir | sort` が出来なかった
+      点を解消(パイプ記号で分断されていた)
+    - 逆クォートの引用の最大文字数を 1024 から 8192 に引き上げた。
+    - 「{}」で関数一覧を出力できるようにした。
+    - nyaos.complete の第三引数で、コマンライン全文字列、カーソル位置を渡す
+      ようにした。
+    - 英語のドキュメント(nyaos_en.txt)を追加。日本語版は nyaos_ja.txt とした。
+    [蟲繕]
+    - 逆クォートで引用されたコマンド出力中の & や > が、機能しないようにした。
+    - 二重引用符で囲まれた逆クォートによる引用で、改行を含む複数の空白文字が1個の
+      空白文字へ縮められていた不具合を修正
+
+2.97_0 (2010/05/25)
+    - nyaos.filter/nyaos.filter2 のテーブル対応
+    - VimShell 上で実行時にカーソルONのシーケンスを出力しないようにした(_nya)
+
+2.96_0 (2010/05/22)
+    - nyaos.command2 の設置
+    - nyaos.filter2 の設置
+    - nyaos.command/command2 の戻り値を errorlevel へ反映させるようにした。
+    - nyaos.dirstack の設置
+    - nyaos.alias/suffix/option を pairs関数で扱えるようにした。
+    - nyaos.history/dirstack を ipairs関数で扱えるようにした。
+    - 起動オプション「-D」で、コンパイル日時、_nya のロードタイミングを
+      表示するようにした。
+    - 起動オプション「-a」廃止
+    - lua_e コマンドでの入力リダイレクトのサポート
+    - %errorlevel% で、エラー値を参照できるようにした
+    [蟲繕]
+    - source 実行中にエラーが発生すると、NYAOS 本体が終了する問題を修正.
+
+2.95_0 (2010/05/06)
+    - nyaos.command で出力リダイレクト・パイプラインが効くようにした。
+    - 関数定義・foreach・「"」「^」による行継続を Ctrl-C で中断できるようにした。
+    - foo というファイルがあると、foo.exe が実行できない問題を修正。
+
+2.94_0 (2010/04/29)
+    - nyaos.default_complete の設置
+    - nyaos.complete の戻り値を任意の個数の文字列から、テーブルへ変更した。
+    - nyaos.eval を設置した。
+    - %nyatype% の内容を NYAOS3K とした
+    - source文で、拡張子が.lua,.luacのファイルは強制的に Lua とみなす
+      ようにした (コンパイルバイナリも読み込み可能)
+    - _nya 内の読み込みメッセージを削除。かわりに、-D オプションで、
+      nyaos.exe 本体が読み込み中のスクリプト名を表示するようにした。
+    - CTRL_SPACE をキーとして認識できるようにした (Windows)
+    [蟲繕]
+    - savehist 定義時に Ctrl-Z で終了すると、空行がヒストリに入ってしまう
+      問題を修正。
+    - 内蔵コマンドのパイプ出力を中断した時に、出力が止まらない問題を修正(OS/2)
+
+2.93_0 (2010/04/24)
+    - Lua 関数で、ファイル名以外の文字列を補完候補に含められるようにした。
+    - カラー ls での色の付け方を HIDDEN,SYSTEM を DIRECTORY より優先する
+      ようにした
+    - & で別セッションで実行する時に、<プロセスID>を表示するようにした。
+    - 新アイコンを用意。
+    - Ctrl-\ で IME の ON/OFF ができるようにした。(Windows のみ)
+    - 内蔵コマンドを介するパイプラインで、一時ファイルを使わないようにした。
+    [蟲繕]
+    - color-ls のデフォルト配色が、-l の有無で違ってしまう問題を修正
+    - リダイレクト失敗の際に、そのままコマンドが実行されてしまう問題を修正
+
+2.92_1 (2010/04/14)
+    - nyaos.filter が効かなくなっていた不具合を修正
+
+2.92_0 (2010/04/06)
+    - -a の無い ls で、_ で始まるファイルや、Hidden 属性のついたファイルを
+      表示しないようにした。
+    - 画面クリアの制御コードを option term_clear ～ で設定できるようにした。
+    - カーソルオンの制御コードを option term_cursor_on で設定できるようにした。
+    - option +XXX で設定される文字列を「(set)」ではなく、空文字列とした。
+    - 「http%3a%2f%2fftp.iij.ad.jp%2fpub%2fcygwin%2f」といったディレクリ名に
+      chdirできない問題があったため、関数・source 以外で %0～%9 を空文字列へ
+      変換しないようにした。
+    - %% を % へ置換するようにした。
+    [蟲繕]
+    - 4GB を越えるサイズのファイルのサイズが 0 になっていた不具合を修正
+    - source で与えた引数に、%0 %1 両方にコマンド名が入っている不具合を修正
+
+2.91_1 (2010/03/30)
+  (Windows)
+    [蟲繕]
+    - 1文字入力のために変更したコンソールモードを元に戻していなかった
+      箇所を修正(Python,Luaといった言語のインタラクティブモードが動作
+      しなくなってしまっていた)
+
+2.91_0 (2010/03/28)
+    - ls に色出力制御オプション --color を追加
+    - _nya や source で読み込まれるファイルの中身が「--」で始まっていたら、
+      全て Lua コードと解釈するようにした。
+    - 内蔵コマンドの print を echo へ改名
+    - xptest , list(lsの旧名) , echoerr の廃止
+  (Windows)
+    - コンソールの直接コントロールを抑制し、ANSIエスケープシーケンスを
+      出力するオプション -t を追加
+
+2.90_1 (2010/03/19)
+  (OS/2)
+    [蟲繕]
+    - PMアプリケーションが起動できなかった問題を修正した。
+
+2.90_0 (2010/03/16)
+    - 正式バージョンナンバー付与
+    - ドキュメント再整備(統一)
+    - パッケージングスクリプト再作成
+
+TEST-VERSOIN (2010/03/15)
+    - 内蔵コマンドが介するパイプラインではテンポラリファイルを使うようにした。
+
+TEST-VERSION (2010/03/13)
+    - OS/2 正式対応
+
+TEST-VERSION (2010/03/10)
+    - ls と lua_e 実行時に Ctrl-C で処理を中断できるようにした。
+      (ただし、パイプつまりの時を除く)
+
+TEST-VERSION (2010/03/07)
+    [蟲繕]
+    - 独自の getch で「澤」問題に対応した。
+      (lukewarm さんパッチ取り込み)
+    [廃止]
+    - sub～endsub コマンド
+
+TEST-VERSION (2010/03/06)
+    [蟲繕]
+    - 「&」が CMD.EXE の start コマンドを利用するような形のままになって
+      いたのをbash 等と同様に、バックグラウンドで動作するようにした。
+    - コマンド名がダブルクォートで囲まれていると実行できない問題を修正した。
+
+TEST-VERSION 2010.03.01
+    - CMD.EXE を一切呼ばないようにした。(常に standalone モードとなった)
+    - lua_e コマンドでもリダイレクトが効くようにした。
+
+TEST-VERSION (2010/02/20)
+    - Lua のツール関数 nyaos.getkey() を追加
+    - 終了時のフックとして nyaos.goodbye を設置
+    - $0 に相当する Lua 変数 nyaos.rcfname を追加
+    - コンパイラのベースを Cygwin ではなく、MinGW32 の gcc とした。
+
+TEST-VERSION (2009/12/20)
+    - 全てのパス(実行ファイルのあるディレクトリ、%USERPROFILE% or %HOME%、
+      カレントディレクトリの _nya を読むようにした。
+    - Lua のツール関数
+        access, exec, chdir, dir, bitand, bitor, bitxor, rshift, lshift
+      を追加
+    - オプション -E , -F を追加
+    - ヒストリ保持テーブル nyaos.history を追加
+    [蟲繕]
+    - -r オプションが効いていなかった問題を修正
+    [廃止]
+    - 設定ファイル _nyados , _nyacus
+
+TEST-VERSION (2009/11/29)
+    [蟲繕]
+    - nyaos.keyhook が nil の時、ハングアップする不具合を修正
+
+TEST-VERSION (2009/11/28)
+    - コマンドライン入力時のキーフックを Lua に用意(nyaos.keyhook)
+
+TEST-VERSION (2009/11/25)
+    - カーソルキーが効かなくなったのを修正した。
+      かわりに、また「澤」が入力できなくなった。
+      (MSVCRT.DLL の getch の問題のため、両立不能であることが判明)
+
+TEST-VERSION (2009/11/21)
+    - TeraTerm で稼働できるようにした(ただし、編集機能はなし)
+      ( lukewarm さんパッチ取り込み )
+    [蟲繕]
+    - Lua コードで「nyaos=nil」を実行するとハングアップする問題を修正
+    - 「澤」と入力できない問題を修正
+    - xscript-mode が使えなくなっていた問題を修正
+
+TEST-VERSION (2009/11/20)
+    [蟲繕]
+    - 標準入力がリダイレクトされていた時にハングアップしないようにした
+      ( lukewarm さんパッチ取り込み )
+    - アイコンが実行ファイルに組み込まれていなかった点を修正
+
+TEST-VERSION (2009/11/19)
+    - ls にて80桁以上のコンソールをサポート
+    - nyaos.properties を nyaos.option へ変更
+
+TEST-VERSION (2009/11/16)
+    - アプリケーション名を NYAOS 3000 とする。
+    - lua インタプリタ内蔵(lua_e コマンド)
+    - オプション multilinequote 廃止
+
+NYAOS 2.xx の更新履歴
+---------------------
+
+2.30 (2009/11/01)
+  (nyacus)
+    - mingw コンパイル時に出る warning に対応.
+  (all)
+    - 変更履歴を整理
+
+TEST-VERSION (2009/10/25)
+    - Makefile を一本に統一した。
+    - ドキュメントのソースを m4 形式にした。
+
+TEST-VERSION (2009/10/18)
+  (nyacus)
+    [虫繕]
+    - 「echo `pwd`」などバッククォートから「pwd」を実行した後、echoなどで
+      出力する時に、次の行の先頭からでなく、カーソルの位置から出力される
+      不具合を修正
+    - バッククォートを一度使った後、プロンプトの色が無効になってしまう
+      不具合を修正
+  (all)
+    [虫繕]
+    - 行の表示限界を超えて文字を入力したあと Ctrl-Wで削除した場合など、
+      表示が乱れる不具合を修正
+
+TEST-VERSION (2009/04/18)
+    [虫繕]
+    - && と || が効かなくなっていたのを修正
+
+TEST-VERSION (2009.03/04)
+  (nyacus)
+    [虫繕]
+    - 内蔵ls のタイムスタンプとファイルサイズがおかしかったのを修正。
+
+TEST-VERSION (2009/02/22)
+  (nyacus)
+    - Windows版は MinGW でビルドするようにした。
+      (lukewarm さんパッチ: http://d.hatena.ne.jp/lukewarm/20090221#p1 )
+    - ターミナルソフト ckw で動作する時に、桁数の変更を自動反映するようにした
+      (hideden さんパッチ: http://d.hatena.ne.jp/hideden/20071125/1196015990 )
+
+2.22a (2004/10/23)
+    [虫繕]
+    - %未定義変数.defined% が 2 になっていた
+
+2.22 (2004/10/17)
+  (nyacus)
+    - chdir した時、カレントディレクトリをウインドウタイトルに
+      出力するようにした。
+  (all)
+    - ${…},$…形式でも環境変数の補完ができるようにした。
+    - bindkey の機能コードに none (何もしない) , insert-self
+      (自分自身を挿入する)を追加。
+    [虫繕]
+    - 逆クォート結果の末尾から空白が除かれていなかった。
+    - 改行コードをプロンプトで出すと、画面幅を誤認識してしまっていた。
+    - 環境変数名の補完で、変数名の大文字・小文字を区別してしまっていた。
+    - 空行入力や Ctrl-C で入力をキャンセルした際、その直前のヒストリが
+      失なわれてしまっていた。
+    - 後ろに補完対象以外の文字列がある時に、補完リストを出力すると、
+      表示が乱れていた。
+[廃止]
+    (nyacus)
+    - 逆スクロール時のタグジャンプ支援機能
+
+2.21 (2004/04/25)
+    - bindkey 文で一度に複数の機能をバインドできるようにした。
+    - 実行ファイルと同じディレクトリの _nya も読み込み対象候補とした。
+  (nyacus)
+    - xscript 利用時のキーをカスタマイズできるようにした
+    - 逆スクロール時のタグジャンプ支援機能
+    - xscript 機能の呼称を「逆スクロール機能」へ改めた。
+[虫繕]
+    - %～.defined% で 0 が得られなかった
+
+2.20 (2004/04/11)
+    - 「関数名{ … }」という形式の新関数定義をサポート
+    - $XXXX , ${XXXX} という形式で変数を参照できるようにした。
+    - 一行エディタを拡張
+        - Ctrl-D ⇒ 空入力状態の時、シェルを終了する。
+        - Ctrl-T ⇒ カーソル直前の二文字を入れ替える。
+    - foreach のパラメータリストを括弧で囲めるようにした。
+      (括弧を無視するだけ)
+    - VBScript版・REXX版ビルド用スクリプトを用意。
+    [虫繕]
+    - 「掛」という文字の 2 バイト目をパイプ文字と認識してしまっていた。
+    - bracexpオプションが有効な時、内部にカンマが無い {…} の
+      中括弧が消えてしまっていた。
+
+2.19 (2004/01/25)
+    - listコマンドについて下記の変更を行った。
+        - 「ls」 を list と等価とした。
+              ⇒ 外部の ls を使用する時は「alias ls ls.exe」と宣言ください)
+        - オプション:-1,-R,-t,-S を追加.
+        - 環境変数 LS_COLORS で、list の色をカスタマイズできるようにした.
+        - Ctrl-C で中断できるようにした。
+
+2.18b (2003/11/24)
+    [虫繕]
+    - alias で $@ を使うと、実引数の漢字が消えてしまう。
+    - プロンプトで $D , $T が化ける。
+
+2.18a (2003/11/8)
+    [虫繕]
+    - ワイルドカード＋変換型補完で、候補がきちんと表示されないバグ
+      を除いた。
+    - list -l で最初のファイルの属性情報部分が灰色になっていなかった。
+    - SHIFT_INS , SHIFT_DEL 等、検出できないキー名称をマニュアルから削除.
+
+2.18 (2003/11/3)
+    - 補完文字列にワイルドカード(*,?)を使えるようにした。
+    - _nya の検索時に C:\ を見ずに、カレントドライブの \ を見るようにした。
+    [虫繕]
+    - 外部コマンドに、2バイト目が 0x60 の漢字を与えると、逆クォートと
+    　誤認識してしまうバグを除いた。
+  (nyacus)
+    - プロンプトや print コマンドで一部のエスケープシーケンスを
+      使えるようになった(今のところ、ESC[2J , ESC[…m だけ)。
+  (nyados)
+    - open コマンド
+
+2.17a (2003/10/12)
+    [虫繕]
+    - list コマンドでもろもろのパス指定(「.」「/」「\」「c:」)が
+      無視されるか、エラーになってしまうバグ(2.16～)を修正.
+    - 引用符が必要な空白を含むファイル名の補完などができなくなって
+      いたバグ(2.17)を修正
+    - 「~desktop\」を補完しようとすると、デスクトップ以下のファイル
+    　のリストが表示されず、「デスクトップ\」が出力されるバグ(2.17)
+    　を修正.
+    - 「~xxxx\」以下の空白を含んだファイルを補完しようとすると、
+      「~」の直後に二重引用符が挿入されてしまうバグを、「\」の後に
+      するように修正
+    - 「~program_files」などアンダスコアが入った特殊フォルダが補完・
+      置換で認識されていなかったバグを修正
+
+2.17 (2003/10/05)
+    - list をカラー化
+    [虫繕]
+    - 内蔵コマンドをリダイレクトすると、ゴミが引数に入るバグを修正.
+    - ファイル名が 80文字を越えると、落ちるバグを修正.
+    - 当ドキュメントの FAQ(1) を修正(スラッシュを二重引用符へ)
+  (nyacus)
+    - デフォルトで 特殊フォルダーのいくつかを ~xxxx に登録するようにした。
+
+2.16 (2003/09/28)
+    - list コマンド ( 内蔵簡易 ls )
+    - alias の仮引数に「$@」(UNIX風のパス区切り・オプション文字(/,-)
+      を DOS 風のもの(\,/)に置換して、実引数全てを展開する)を追加.
+    - -a オプション：エイリアスとして
+            alias ls "list"
+            alias mv "move /-Y $@"
+            alias cp "copy /-Y /B /V $@"
+            alias rm "del $@"
+            alias rmdir "rmdir $@"
+      を定義する。
+    - 「a{1,2,3}b」を「a1b a2b a3c」のように展開できるようにした。
+       (option +bracexp 設定時)
+(2003/09/02)
+    - 補完リスト表示時に、途中パスを表示しないようにした。
+    - -e オプション：引数の1コマンドを実行
+    - option nullcomplete で1文字も入力していない状態での補完を許可。
+    - pushd したディレクトリ名を ~1 , ~2 で参照できるようにした。
+    (nyacus)
+        - ショートカットの指すディレクトリへの chdir が可能となった。
+        - 補完でショートカットをリンク先へ置換するようにした(option +lnkexp 設定時)
+    [内部]
+    - クラス名改名
+        Dir → NnDir            , NnStrHash → NnHash
+    - ソースファイル名改名
+        lfn.* → nndir.*        , nnstrhash.* → nnhash.*
+        ntconosle.* → ntcons.* , commands[12].* → cmds[12].*
+
+2.15 (2003/02/11)
+    - 補完の時、一度付けた引用符を外さないようにした。
+    - 変換型補完機能追加(Ctrl-TAB)
+
+2.14b (2003/02/08)
+    - 末尾に＆を付けると、コマンドのスラッシュが￥に置換されない
+      蟲を駆除した。
+    - \ や / も含まないが、: があるディレクトリ名を補完すると、
+      末尾に : がついてしまう蟲を駆除した。
+    - 本シェル外(親プロセス等)で定義された英小文字の環境変数
+      (例:winbootdir等)を参照できなかった点に対応
+        → 今まで変数名を大文字化してから参照していたのを、そのままで
+           参照し、見付からなかった時のみ、改めて大文字化して参照する
+           ようにした。本シェル内では定義時に大文字化するので関係なし。
+    - OS/2 版の配布の本気化に伴い、配布 URL を変更
+        ：/hayamatta/windows/nya.html → /hayamatta/nya/index.html
+
+2.14a (2003/02/01)
+    - 行末尾が「型」という文字の時、行が継続されていたのを修正.
+      (型の2バイト目が「^」であったため)
+    - NYAOS 2 のみアイコン(白い猫)を付属させた。
+      (OS/2形式のアイコンなので、Windowsでは使えません m(__)m )
+
+2.14 (2003/01/20)
+    - ヒアドキュメント
+    - インラインファイルテキスト
+    - 「~/hoge hoge」を補完したとき「"~/hoge hoge"」ではなく
+      「~"/hoge hoge"」とするようにした。
+    - 環境変数名の補完・環境変数名を含むパスの補完
+    - 起動時のロゴをシンプルにした。
+    - nyacus.exe にアイコン(窓際の赤い猫)を内蔵させた。
+    [虫繕]
+    - complete-or-list が complete_or_list になっていたのを修正(両方 Ok にした)
+
+2.13d (2002/10/06)
+    [虫繕?]
+    - NYACUS で ALTキーが認識できないので、
+        単語単位の右移動：Ctrl+[→]
+        単語単位の左移動：Ctrl+[←]
+      をかわりにデフォルトでバインド。
+    [ドキュメント修正]
+    - 単語単位のキー移動が更新履歴以外のドキュメントに反映されていなかった。
+    - NYACUS での ALT キーのバインドの記述を削除
+
+2.13c (2002/10/05)
+    [虫繕]
+    - Vz 互換ヒストリで、表示エリアよりも大きい単語の呼び出しを何回か行った後、
+    　キャンセル(ESC等)すると、表示が乱れるバグ(かなり前～)を修正
+    　→ キャンセル時の表示位置オフセットの更新漏れ(GetLine::offset)
+
+2.13b (2002/10/03)
+    [虫繕]
+    - ~xxxxx の展開後フォルダー名に空白があっても、引用符を補って
+      いなかったのを修正(やや変則的な付け方…echo してみれば分かります)
+
+2.13a , 2.12b (2002/09/30)
+    [虫繕]
+    - 空白の後に日本語が含まれるファイル名の補完ができないことがあるバグ
+      (かなり昔～)を修正。
+
+2.13 (2002/09/29)
+    - ~xxxxx/ という名称を任意のディレクトリに置換できるようになった。
+        → 例「folder desktop c:\Windows\デスクトップ」と _nya にて定義。
+    - ALT+F(forward-word),ALT+B(backward-word)による単語単位での移動(今頃？)
+
+2.12a (2002/09/24)
+    [マニュアル訂正]
+    - 標準エラー出力に関する説明が改訂されていなかったのを修正。
+
+2.12 (2002/09/21)
+    - 逆クォート内で、内蔵コマンドも使えるようになった(ただし、実装はダサダサ)
+    - 「option {+/-}オプション名」でオプションを空設定/削除できるようになった。
+    - 「option +dots」で、DOS,OS/2 でも「...」というパス名が使えるようになった。
+    - リダイレクトを自前で処理していた(2.08～)のを、NYADOS 以外で廃止した。
+        → CMD.EXE は最初から 2> をサポートしていて、さらに本機能の為に
+        　「2>&1 |」などが逆に使えなくなってしまっているため。
+    - 「|&」(標準出力・標準エラー出力両方のパイプ接続)をサポート
+
+2.11b (2002/09/20) , 2.10f (2002/09/20)
+    [虫繕]
+    - 「set env=」(環境変数の削除)、「set env-=」(環境変数の部分削除)が
+    　機能していなかったバグ(かなり昔?～)を修正
+
+2.11a (2002/09/14)
+    - ドキュメントがバケバケだった(2.11)のを修正
+    - OS/2 版でコンパイルできなかったバグ(2.11)を修正
+    - OS/2 版でも STANDALONE モードを真面目に実装
+
+2.11 (2002/09/08)
+    - xscript 機能追加パッチを取込み(NYACUS on NT系のみ:感謝＞UK-taniyama様)
+    - STANDALONE モード、復活。
+    - option prompt ～ でプロンプトを設定できるようにした。
+      → command.com/cmd.exe とは別にプロンプトを設定できます。
+    - & 使用時に用いる start 句の詳細を「option start ～」で指定できるようにした。
+      → NT 系で二重引用符を含んだコマンドを & 実行するためには、これで
+         「option start "start """""」などと定義してください。
+    - 拡張子 CMD のファイルをデフォルトのコマンド名補完の対象にした。
+    - 前後に __ を付けた名称も内蔵コマンドとして認識するようにした。
+      (alias → __alias__ でも利用可能)
+      → 内蔵コマンドと同じ名称の関数が存在する際に利用可能。
+
+2.10e (2002/09/07)
+    - エイリアス以外に & を付けると、窓が瞬間二つ開かれてしまうバグ(2.10d)を修正
+
+2.10d (2002/09/07)
+    - エイリアスに & を付けても、別窓で実行されないバグ(2.10～)を修正
+
+2.10c (2002/09/02)
+    - 「c:」「d:」などによるドライブ移動が効かなくなっていたバグ(2.10～)を修正
+
+2.10b (2002/08/31)
+    - 「# ～ &」が「start # 」にコンバートされてしまうバグ(2.10～)を修正
+      → # は行単位で解釈するよう変更(今まではコマンド単位)
+
+2.10a (2002/08/30)
+    - 引用符を含むパスの補完がおかしくなっていたバグ(2.10～)を修正
+
+2.10 (2002/08/30)
+    - -r オプション(_nya の変わりに読みこむファイルを指定可能)
+    - STANDALONE モード、廃止。
+    - コマンドセパレータに & を使うと、別窓で実行するようにした。
+      (「foo & 」→ 「start foo」に同じ)
+    - OS/2 版でも Ctrl-K , Ctrl-Y でクリップボード読み書きできるようになった。
+    [虫繕]
+    - PATHで指定した dir の下に、suffix で指定したファイルを置いて利用した
+      場合、スペース入り PATH がきちんと解釈されていない
+    - suffixで指定した拡張子付ファイルを、"でくくって直接呼び出した場合
+      suffix の設定が効かない。
+
+2.09 (2002/08/17)
+    - WindowsNT 系上の NYACUS で、カーソルを見えやすくした。
+      （カーソル移動などに直接APIを使用するようにした）
+    - 「cd - 」で直前のディレクトリへ
+    - pushd に -h , -H オプションを追加
+      （ディレクトリ省略時の動作が「pushd .」と同じになる）
+    - 「set XX+="YY"」で、二重引用符は除くようにした。
+    　（Win9x では、引用符付きの PATH は認識されないため）
+    [虫繕]
+    - source ,pushd の引数で、空白を含むパスが効かなかった。
+    - PATH の中に「c:\Program Files\bin」などのパスが含まれていると、
+      そのディレクトリのコマンドに対し、コマンド名補完できなかった。
+    - コマンド名 "c:/Program Files/bin/space.bat" が、
+      "c:\Program Files/bin/space.bat" のように置換されていた。
+
+2.08c (2002/06/23)
+    - 内部コマンドで日本語が化けてしまうバグ(2.07?～)を修正.
+
+2.08b (2002/06/15)
+    - シェルのネスティングに上限回数をつけた(最大50回)。
+      (source・関数の無限呼び出しによるクラッシュ回避の為)
+
+2.08a (2002/05/27)
+    - OS/2で、ソースからビルトできなくなっていたのを修正。
+      (Windows版では特に問題なし)
+
+2.08 (2002/05/26)
+    - ! を持つファイル名を補完する際に、引用符で囲むようにした。
+    - 標準エラー出力のリダイレクト機能(2>,2>>)
+    - リダイレクト先ファイルパス名に「/」が使えるようになった。
+    - 補完候補表示時にソートするようにした。
+    - 補完の仕方を Windows2000 の CMD.EXE 相当にした。
+        - 空白付きディレクトリを補完する際でも、引用符を閉じるようにした。
+        - 引用符が補完対象文字列の中の任意の位置に含まれていても、取り除く
+          ようにした。
+        (例)
+            ls c:/progr[TAB]
+                → ls "c:/Program Files/"
+            ls "c:/Program Files/"mo[TAB]
+                → ls "c:/Program Files/mozilla.org/"
+
+2.07 (2002/03/17)
+    - 関数機能(sub～endsub)
+    - エイリアスを元の仕様(2.04aまでの置換型)に戻し、パイプ後に使える
+      ようにした。かわりに $T は使用できなくなった。
+    - source -h で、ファイルからヒストリを読みこめるようになった。
+    - NYADOS でも、source の引数にロングファイル名を使えるようにした。
+      (実は今までショートファイル名しか使えていなかった)
+    - if exist のファイル名に空白やロングファイル名が使えていなかったのを
+      修正。
+    - %環境変数.split% で、空白を含むファイルを "" で囲むようにした。
+    - オプション multilinequote が設定されているときだけ、複数行にわたる
+      "～" が有効になるようにした。
+
+2.06b (2002/02/24)
+    - 補完で、80桁以上のパス名が現れた場合に落ちる不具合(かなり昔～)を修正.
+    - エイリアスの置換結果がヒストリーに登録されてしまう不具合(2.06～)を
+      修正.
+    - PROMPT マクロに $S→空白 , $A→& , $C→( , $F→) を追加.
+      (set PROMPT=...で末尾に空白を置けないための代替処置)
+
+2.06a (2002/02/14)
+    - 空入力し続けると落ちてしまう不具合(2.05～)を修正.(NYACUS,NYAOS-II)
+
+2.06 (2002/02/11)
+    - エイリアスの中で、!! などが使えなくなっていた不具合(2.05～)のを修正.
+    - _nya 内に、エイリアス redo を定義
+      (直前に実行したコマンドを別窓で再実行する)
+    - eval コマンドの追加
+
+2.05a (2002/01/21)
+    - NYADOSで、矢印キーなどの入力が化けてしまっていた不具合(2.05～)を修正。
+      (NYACUS,NYAOS2 では問題なし:dmc++向け部分にバグがあった)
+
+2.05 (2002/01/20)
+    - キャレット(^)・閉じない二重引用符(")で、行を継続できるようになった。
+    - 制御構文全体を１ラインに収めることができるようになった。
+        → １行で
+            「foreach i A B C ; echo %i% ; end」
+            「if a == a then echo true ; else echo false ; endif」
+           と書けるようになった。
+    - パイプ文字(|)の後に、エイリアスコマンドが使え「なく」なった。
+      (上記拡張に伴う仕様変更)
+    - 対応コンパイラから、Turbo-C++ を外しました。
+    　以後、NYADOS → Digitalmars C++
+            NYACUS → Borland C++
+            NYAOS2 → emx/gcc
+    　にてコンパイルしたものを配布します。
+
+2.04a (2002/01/20)
+    - エイリアスを補完すると、エイリアス名が変わってしまう(空白が末尾に
+      つく)バグを修正。
+    - endif を実行したのに、プロンプトの「skip:else」が解除されない
+    　バグを修正。
+    - else をいきなり実行すると、即終了してしまうバグを修正。
+
+2.04 (2002/01/12)
+    - 空白＋セミコロンによる、マルチステートメント
+    - alias マクロに $T(;),$B(|),$L(<),$G(>),$Q(`) を追加(DOSKEY互換)。
+    - Ctrl-V で制御文字を入力できるようにした。
+    - bindkey で、それまでに登録したキーバインドを表示できるようにした。
+    - Vz型の単語単位のヒストリが効かなくなっていたのを修正。
+
+2.03 (2002/01/01)
+    - 逆クォートによるコマンド出力引用機能
+    - コマンドラインが長すぎて実行できなかった場合にエラーを表示するように
+      した。(ただし、NYACUS の場合、普通にコマンドまたはファイル名が…と
+      表示されてしまう)
+    - print命令(ただの内蔵echo:文字数制限がないだけ)
+    - cd --basedir /? で落ちる件へ対処
+    - ヒストリにマッチしない場合、エラーを表示するようにした。
+    - デフォルトで高い輝度を低くした。
+
+2.02 (2001/11/23)
+    - ヒストリ参照(previous)で、コマンドラインが短くならない(前の末尾が残る)
+      不具合を修正.
+    - foreach で、ファイルの半数を取りこぼす不具合を修正.
+
+2.01 (2001/11/18)
+    - 補完の共通部分抽出時に2バイト文字の文字境界を誤り、落ちてしまうバグを
+      除去。再現方法：「VirusScanウィルス」「VirusScanパターン」というディ
+      レクトリを作り、「cd Virus」の後、[TAB]とタイプする。
+    - PROMPTマクロ $W 追加
+    - cd に --basedir オプションを追加。
+    - pwd コマンド内蔵化。
+
+2.00 (2001/09/28)
+    - NYAGOS を NYACUS へ、NYAGOS/2 を NYAOS-II へ改名(NYADOSはそのまま)。
+    - バージョン番号を NYAOS 1.xx と合わせるため、2.00 に上げる。
+    - foreach で、環境変数ではなく、シェル変数(OPTION定義)を変更するように
+      し、使用後、前の値を復活させるようにした。
+    - prompt 用マクロを、ほぼ COMMAND.COM 互換にした(ミリ秒以外)。
+    - bindkey コマンドで使える機能名を bash 準拠のものにし、削除系のキー
+      (CTRL-U,CTRL-W)の機能も bash と同じにした。
+    - 外部コマンドにおいても、~ を環境変数 HOME の内容へ置換できるように
+      した。
+    - 環境変数 NYASHELL 廃止。代わりに オプション変数 nyatype を用意。
+    - オプション uncompletechar , width , mineditwidth を用意。
+    - if 文の == の前後に空白が入っても、等式を認識できるようにした。
+
+0.28 (2001/09/09)
+    - NYADOS を DOS で使用すると、「Stack overflow!」と表示して終了して
+      しまうのに対処（単にコンパイルし損なっていたらしく、全ソースの再コン
+      パイルだけで直った）。
+
+0.27 (2001/09/09)
+    - NYAGOS および DOS,OS/2環境の NYADOS で、引数なしの pushd が正常に
+      カレントディレクトリを記憶しないバグを修正。
+
+0.26 (2001/09/09)
+    - 「set 存在しない環境変数名」で、全環境変数が表示される動作を修正。
+      「環境変数名=」とだけ表示するようにした。
+    - 環境変数 NYASHELL に起動シェル名(パス名にあらず:NYADOS,NYAGOS,
+      NYAGOS2のいずれか)を起動時に設定するようにした。
+    - pushd,popd,dirs。
+    - savehist オプションが効かなくなっていたバグを修正。
+    - histfilesize オプションを設置。
+    - エイリアス用マクロ($n,$n*,$*)の追加。
+    - エイリアス・拡張子関連付けがパイプの後でも効く様にした。
+    - 拡張子関連付けをした時、スクリプト名をフルパスに置換するようにした。
+    - -S オプションの廃止。
+
+0.25 (2001/08/26)
+    - Vz ライクヒストリのサポート(お待たせしました)
+
+0.24 (2001/08/25)
+    - NYAGOS でも standalone オプションが正常に動くようになった。
+    - foreach で、値が 0 個の時、end 節までスキップするようにした。
+    - -f,-S オプションの追加
+    - エイリアスもコマンド名の補完候補に加えるようにした。
+    - CTRL-C で SHELL 自身が終了してしまわないようにした。
+    - bindkey が _nya 内で効かないのを修正。
+    - カット＆ペーストのサポート(NYAGOS ではクリップボードとアクセス可能)
+    - 環境変数に対する演算子(.defined,.split,.length)
+
+0.23 (2001/07/28)
+    - standalone オプションを追加。(NYADOSのみ有効)
+    - savehist オプションを追加。
+    - コマンド名補完で、ディレクトリが含まれない点を修正。
+    - set += , set -=
+    - foreach を追加
+
+0.22 (2001/07/01)
+    - 「!文字列」「!?文字列?」をサポート
+    - _nya で、ブロックifが使えるようになった。
+    - DEL キーが通常文字と認識されているバグに対処
+    - 直前と同じ内容の入力はヒストリに入れないようにした。
+
+0.21 (2001/06/17)
+    - 「!」によるヒストリのサポート
+    - history コマンドのサポート
+
+0.20 (2001/06/03)
+    - option/unoption コマンドを用意。
+    - 内蔵コマンドで、パイプ・出力リダイレクトを効くようにした
+      (入力リダイレクトは無意味なので、未サポート)
+
+0.19 (2001/05/27)
+    - コマンド名補完をサポート(PATHをたどる)
+    - 拡張子・エイリアスの大文字・小文字を区別しないようにした。
+
+0.18 (2001/05/20)
+    - プログラム名のディレクトリ区切り記号の / を￥へ置換するようにした。
+    - suffix/unsuffix命令を追加
+
+0.17 (2001/05/12)
+    - 「0123456789」や「\bin\ping」など一部の文字列を入力すると、異常終了する
+    　バグを修正。原因は、ハッシュ値が int 型をオーバーフローして、負になって
+    　しまっていたため。NYADOS のみ発生。NYAGOS,NYAGOS/2 には無し。
+    - DigitalMars C++ でコンパイルすると、Ctrl-P を叩いた際に、プリンタ出力
+    　モードになってしまう現象に対処。
+
+0.16 (2001/05/05)
+    - 環境変数 WIDTH から画面幅を取得するようにした。
+    - プロンプトが画面幅より長い時に編集できなくなる現象に対処
+        - 編集幅が負になってしまう蟲を駆除
+        - 編集幅が5桁以下の時に強制改行させるようにした。
+    - Escapeキー・Ctrl-U が横スクロール機能に対応していなかったのを修正。
+
+0.15 (2001/05/03)
+    - 横スクロール機能
+    - ショートファイル名は一致するが、ロングファイル名が一致しないファイルが
+    　対象に入った場合、補完結果が逆に短くなってしまう現象を修正。
+      (例：C:\MyD2 というフォルダを作成して、C:\MyD で補完してみる)
+
+0.14 (2001/04/28)
+    - 補完の際、「.」「..」が含まれないようにした。
+    - ヒストリ参照の変更
+        「1」「2」「3」「4」「5」と入力後、「3」を参照して Enter 入力した際、
+        「4」「5」を破棄するようにしていた仕様を廃止した。
+        (要はNetscape調ではなく、tcsh に近くした)
+    - NYA*OS 自身,source命令に与えた引数を %1 %2 で参照できるようにした。
+    - 「if exist」「if ～ == ～」,goto文をサポートした(if errorlevel は×)
+    - shift をサポート
+    - NYA*OS に与えられた引数のディレクトリへ chdir する機能を廃止
+        (_nya*os に「if not (%1) == () cd %1」という一文を入れることで
+         本機能を実現することが可能なため)
+
+0.13 (2001/04/14)
+    - NYAGOS: 仮想画面での40行以降になっても、バックスペースが正常に働くように
+      した。
+    - NYAGOS: Ctrl-L で画面をクリアできるようになった。
+    - デフォルトのプロンプトが $p だけになっていたのを $p$g にした。
+    - iostream を使わないようにして、プログラムサイズを削減
+      (NYADOSの場合、サイズが 66KB -> 44 KB )
+    - OS/2版(NYAGOS2)-初版
+
+0.12 (2001/04/08)
+    - NYADOS を間違えて Small Model版で 0.11 をリリースしてしまったので、
+      Compact Model版で再リリース。
+    - NYADOS を Digitalmars C++ でもコンパイルできるようにした。
+
+0.11 (2001/04/07)
+    - NYADOSのコンパイルモデルを SMALL から COMPACT へ変更する。
+        - それに伴い、実行ファイルサイズが 48KB -> 66KB へ増加
+        - 補完でのオーバーフローによる不具合が解消
+    - ファイル名補完で、/ が使われていたら、補完に使う文字も / を使う
+      ようにした。
+    - ファイル名保管で、空白が含まれているパスに対する処理の虫繕い。
+
+0.10 (2001/03/31)
+    - NYAGOS 初版
+    - パラメータにディレクトリを指定すると、そこへ chdir するようにした。
+    - cd2 を cd にした他、次のように cd を変更
+        - 環境変数HOMEが未定義の時、引数無しの cd の動作を DOS の cd と同じ
+        　になるようにした(それまでは C: のデスクトップやルートへ移動してい
+        　た)
+        - 存在しないディレクトリに移動する際にエラーをきちんと出すようにした。
+    - 二重引用符と空白の両方を含むパス名を補完する際に、余分に二重引用符を
+    　補完してしまう虫を駆除
+    - クラスライブラリを自前のものに変更
+        - 実行ファイルサイズ削減(54KB->48KB)
+        - 別名定義内容が一個の場合に、一覧表示に出ない虫を駆除
+
+0.09 (2001/01/28)
+    - C:\Windows ディレクトリ内ファイルを補完すると、メモリ不足で落ちる
+    　現象に対処療法を施した...
+    - VFAT非サポートOS(DOS,OS/2のVDM)でも動作するようにした。
+
+0.08 (2001/01/25pm)
+    - 別のドライブに対する補完で、ドライブ文字が消える虫を駆除。
+    - ネットワークごしのファイルに対する補完が効かなかった虫を駆除。
+    - cd2 を追加
+    - プリプロセス機能を追加
+
+0.07 (2001/01/25am)
+    - bindkey コマンドを追加
+    - V-Text環境の26行目移行で、カーソルが上へ移動してしまう虫を駆除。
+      (これ、V-Textドライバの Backspaceコードの扱いがバグってると思うんです
+       が...ということで、BSではなく、ESC[D を使うようにしました)
+
+0.06 (2001/01/20)
+    - source コマンドを追加。
+    - エイリアス機能を追加。
+
+0.05 (2001/01/13)
+    - Ctrl-L で画面をクリアできるようにした。
+    - set で環境変数を変更できなかったので、内蔵コマンドとした。
+    - exit で終了できるようにした(内蔵コマンド化)。
+    - ドキュメントを作成した(これ)
+    - プロンプトを環境変数PROMPTから読むようにした(今までは固定だった)
+    - _nyados を読み込むようにした。
+
+0.04 (2001/01/11)
+    - ファイル名で補完で空白を含むファイルを扱えるようにした。
+
+0.03 (2001/01/10)
+    - 補完候補一覧機能
+    - カーソルキーサポート
+
+0.02 (2001/01/08)
+    - デフォルト色を明灰色から白にした。
+    - プロンプトで赤いカレントディレクトリを表示するようにした。
+    - 補完候補が一つの時、空白も補うようにした。
+    - 起動時にロゴを表示するようにした。
+    - Null pointor assignment の原因を一つ潰した。
+    - 山地氏に、WindowsME 上での動作を確認していただいた。
+
+0.01 (2001/01/07)
+    - NYADOS初版！
+
+連絡先
+======
+
+Nihongo Yet Another Open Shell (NYAOS) はフリーソフトウェアです。
+ユーザは、GNU General Public License に従う限り、本ソフトウェアを
+使用・複製・改変・配布・改変版の配布をすることができます。
+作者 葉山 薫は、本ソフトウェアによって生じた現象・障害に関して
+一切責任を負いません。
+（なお、GPL 以外での再配布・改変も、相談いただければ検討します）
+
+最新版のバイナリ・ソースは、下記ＵＲＬからダウンロード可能です。
+
+    http://www.nyaos.org
+
+質問・バグリポート・提案がございましたら、以下までご連絡ください。
+
+    iyahaya@nifty.com
+
+本ソフトウェア開発にあたり、次の方々にご協力いただきました。
+
+    山地 治 様        ＳＮＳＦ 様          濱村 隆史 様
+    白畑 裕充 様      Average 様           神奈川の武藤 様
+    我澤 賢之 様      諏訪 拓也 様         古舘 未来彦 様
+    blueday  様       今井 優 様           森 和貴 様
+    森下 和典 様      清原 智和 様         FUJI Goro 様
+    諏訪 拓也 様      UK-taniyama 様       夜刀の守 様
+    Susumu Chida 様   Nogue 様             斎藤 研一 様
+    T.Uchida 様       ギス(gis_dur)様      そいつ！ 様
+    横林 武 様        Christoph Brendes様  TEM 様 
+    hideden 様        lukewarm(sava)様     林 雅之 様
+    thinca 様         Shougo 様            齊藤 様
+    craftware 様      Dice様               tyru 様
+    nocd5 様          wantora 様           mattn(@mattn_jp)様
+    Akinori Hattori(@hattya)様             gocho(@gocho)様
+    Yohei Endo(@yoheie)様                  pepperP/Pink(@mugyu)様
+    Martin Hason 様   @orange_clover様     @usaturn様
+    @turky様          @kyon_mm様           Gad Brodai様
+    中西 正彦様       @rltm様              @laugh_K様
+    @overthestardust様                     DeaR(@nayuri_aohime)様
+    @h_east様
+
+この場を借りて、お礼申し上げます。ありがとうございました。

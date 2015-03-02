@@ -1,0 +1,30 @@
+#include <winver.h>
+
+LUACAT ICON luacat.ico
+VS_VERSION_INFO    VERSIONINFO 
+FILEVERSION        3,3,8,0
+PRODUCTVERSION     3,3,8,0
+FILEFLAGSMASK      VS_FFI_FILEFLAGSMASK 
+FILEFLAGS          0x00000000L
+FILEOS             VOS__WINDOWS32
+FILETYPE           VFT_APP
+FILESUBTYPE        VFT2_UNKNOWN
+BEGIN
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0411, 0x04E4
+    END
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "041104E4"
+        BEGIN
+            VALUE "CompanyName",      "NYAOS.ORG"
+            VALUE "FileDescription",  "Extended Commandline Shell"
+            VALUE "FileVersion",      "3.3.8_0\0"
+            VALUE "LegalCopyright",   "Copyright (C) 2001-2013 HAYAMA,Kaoru\0"
+            VALUE "OriginalFilename", "NYAOS.EXE\0"
+            VALUE "ProductName",      "Nihongo Yet Another Open Shell\0"
+            VALUE "ProductVersion",   "3.3.8_0\0"
+        END 
+    END
+END

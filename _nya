@@ -1,0 +1,51 @@
+#(English)
+#   This file _nya is the script NYAOS execute on starting up.
+#   NYAOS reads _nya(s) on these directories in the same order as written:
+#    (1) _nya on the same directory as NYAOS.EXE
+#    (2) %HOME%\_nya or %USERPROFILE%\_nya
+#    (3) The current directory
+# I recommend you to
+#    - put the original _nya on (1)
+#    - put your customized _nya on (2)
+#
+#(Japanese)
+# _nya は NYAOS の初期設定ファイルです.
+#   (1) NYAOS.EXE のあるディレクトリ
+#   (2) %HOME% の下(未定義であれば %USERPROFILE%)
+#   (3) カレントディレクトリ
+# にある _nya を「順に全て」呼び出します.
+# ※ ただし、(1)==(3) の場合等は、(3)を呼び出しません.
+#
+# 通常
+#    - NYAOS.EXE に添付の _nya (当ファイル) は (1) へ
+#    - そのユーザで定義する設定は (2) へ
+# 配置してください.
+
+if /%OS%/ == /Windows_NT/ then
+    suffix vbs   cscript //nologo
+    suffix js    cscript //nologo
+endif
+
+suffix ny  nyaos -f
+suffix pl  perl
+suffix py  python
+suffix rb  ruby
+suffix jar java -jar
+suffix lua lua
+suffix awk awk -f
+
+option +backquote
+option +history
+option +nullcomplete
+option +tilde
+option +glob
+option prompt $e[31;40;1m[$w]$_$$ $e[37;1m
+option uncompletechar ,;=``
+
+# _nya.d\ 以下のスクリプトをロードする
+
+foreach module "%0.d"\*.ny "%0.d"\*.lua
+    if exist $module then
+        source $module
+    endif
+end

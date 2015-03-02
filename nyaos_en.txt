@@ -1,0 +1,1897 @@
+                              The Free Software 
+                        Nihongo Yet Another Open Shell
+                          2001-2013 (c) HAYAMA,Kaoru
+
+Feature
+=======
+
+- Line Editor like tcsh
+- File/Commandname Completion fit to Windows Filesystem
+- Color-ls
+- Commandline history
+- Alias
+- Cusotomizing key-binding
+- Quoting command's output with backquote-mark
+- Access from/to clipboard
+- Powered by Lua 5.2.1
+- Free Software. GNU General Public License
+
+NYAOS does not use registory. To uninstall, remove files only.
+
+How to use
+==========
+
+Put _nya,which is packaged in zip-file, onto the same directory with nyaos.exe, 
+and run nyaos.exe.
+
+On OS/2 Warp, emx.dll (0.9d or later) are required in LIBPATH.
+
+Write on %USERPROFILE%\_nya or %HOME%\_nya what you want to define setting .
+
+Deferences between _nya and CMD.EXE's batch file.
+
+- ignore line starting with '#' as comment-line.
+- can not use one-line 'if'-statement like CMD.EXE
+- When the file starts '--', it is treated as Lua-script.
+
+
+nyaos.exe's option
+------------------
+
+-f SCRIPTFILENAME ARG(s)
+    load SCRIPTFILENAME and execute it.
+    After executing, nyaos.exe shutdown.
+    When SCRIPTFILENAME ends with .lua , .luac or .nua ,
+    execute with Lua-interpretor. You can omit '-f'.
+    (`nyaos foo.lua' equals `nyaos -f foo.lua')
+
+-D
+    Debug flag. It equals to statement 'option +debug'.
+
+-Dvar=val
+    It equals the statement 'option var val'.
+
+-r SCRIPTFILENAME
+    load SCRIPTFILENAME in stead of _nya
+
+-e "COMMAND"
+    execute COMMAND
+
+-E "LUA-COMMAND"
+    execute COMMAND as Lua.
+
+-F LUA-SCRIPTFILENAME
+    execute SCRIPTFILENAME with Lua-interpretor
+
+
+Key-binding
+===========
+
+    ^A Home (beginning-of-line)
+        move cursor to beginning of line     
+    ^B Å© (backward-char)
+        move cursor to left by one charactor 
+    ^C (abort)
+        cancel                               
+    ^D (erase-list-or-bye)
+        (1) When the line is empty, cause the shell exit.
+        (2) At the end of line, Lists completion possibilities 
+            about the file/command-name under the cursor,
+        (3) Deletes the charactor under the cursor.
+                                                     
+    ^E End (end-of-line)
+        move cursor to end of line           
+    ^F Å® (forward-char)
+        move cursor to right by one charactor 
+
+    ^H Bs (backward-delete-char)
+        delete the left charactor of cursor  
+    ^I Tab (complete-or-list)
+        Completes a word as filename/command-name       
+    ^K (kill-line)
+        erase charactors after cursor [*]   
+    ^L (clear-screen)
+        clear screen and repaint the command-line 
+                                                     
+    ^M Enter (accept-line)
+        termnate line editing                
+    ^N DOWN (next-history)
+        rewind the history                   
+    ^P UP (previous-history)
+        quote the previous line on the history                    
+    ^R (i-search)
+        search history incrementally.
+    ^T (swap-char)
+        swap two charactors till cursor      
+    ^U (unix-line-discard)
+        delete charactors between beginnning of the line and cursor
+    ^V (quote)
+        insert any charactor you type int the next
+    ^W (unix-word-rubout)
+        delete the left word of cursor
+    ^Y (yank)        
+        paste string of clipboard.
+    ^Z (bye)
+        terminate NYA*S
+    Del (delete-char)
+        delete charactor on cursor
+    Esc (kill-whole-line)
+        delete the whole charactors in the line
+    ^O ^TAB (complete-next)
+        complete the file name one by one.
+    Other-keys  (insert-self)
+        insert typed charactor
+
+(Windows Version)
+    ^] (xscript:start)
+        start the scroll-mode
+    ^RIGHT (forward-word)
+        move cursor to the head of the next word 
+    ^LEFT (backward-word)
+        move cursor to the tail of the previous word 
+(OS/2 Version)
+    ^RIGHT ALT-F (forward-word)
+        move cursor to the head of the following word 
+    ^LEFT ALT-B (backward-word)
+        move cursor to the tail of the previous word 
+
+At completing the filename with ^O or ^TAB
+
+    DOWN ^TAB ^O ^N (complete-next,(vzlike-)next-history)
+        the next filename which matches the pattern you type 
+
+    UP ^P (complete-previous,(vzlike-)previous-history)
+        the previous filename
+        
+    TAB ^I ^D
+        list the filenames
+    Enter ^M
+        fix the filename
+    Others 
+        fix the filename and do function the key has.
+
+Built-in commands
+=================
+
+These command are available on nyaos.exe only. All build-in commands 
+has an alias such as `__foo__' instead of `foo'.
+
+alias
+-----
+
+    alias NAME DEFINITION
+    OR
+    alias NAME=DEFINITION
+	define the alias NAME as DEFINITION.
+    alias NAME
+	display the definitiion of the alias NAME.
+    alias
+	display the all definition.
+
+Macros you can use in DEFINITION.
+
+    $*  all parameters
+    $n  N-th parameter
+    $n* parameters after N-th.
+    $$  replaced `$'
+    $B  replaced `|'
+    $L  replaced `<'
+    $G  replaced `>'
+    $Q  replaced '`'
+    $@  Same as $` but convert letters like belows.
+            /  to  \
+            -WORD  to /WORD
+            WORD/  to WORD\.
+            WORD\  to WORD\.
+            "...""..." to ..."...
+
+When no macro-charactors used, parameters are appneded the tail of commandline.
+
+
+bindkey
+-------
+
+Customize the key-binding.
+
+    bindkey KEYNAME FUNCNAME
+
+KEYNAME is one of these.
+
+    BACKSPACE       CTRL_SPACE
+    CENTER          CTRL_A          CTRL_AT         CTRL_B
+    CTRL_C          CTRL_CENTER     CTRL_D          CTRL_DEL
+    CTRL_DOWN       CTRL_E          CTRL_END        CTRL_F
+    CTRL_F1         CTRL_F10        CTRL_F11        CTRL_F12
+    CTRL_F2         CTRL_F3         CTRL_F4         CTRL_F5
+    CTRL_F6         CTRL_F7         CTRL_F8         CTRL_F9
+    CTRL_G          CTRL_H          CTRL_HOME       CTRL_I
+    CTRL_INS        CTRL_J          CTRL_K          CTRL_L
+    CTRL_LEFT       CTRL_M          CTRL_N          CTRL_O
+    CTRL_P          CTRL_PAD_ASTERISK               CTRL_PAD_MINUS
+    CTRL_PAD_PLUS   CTRL_PAD_SLASH  CTRL_PAGEDOWN   CTRL_PAGEUP
+    CTRL_PRTSC      CTRL_Q          CTRL_R          CTRL_RIGHT
+    CTRL_S          CTRL_SPACE      CTRL_T          CTRL_TAB
+    CTRL_U          CTRL_UP         CTRL_V          CTRL_W
+    CTRL_X          CTRL_Y          CTRL_Z          DEL
+    DOWN            END             ENTER           ESCAPE
+    F1              F10             F11             F12
+    F2              F3              F4              F5
+    F6              F7              F8              F9
+    HOME            INS             LEFT            PAGEDOWN
+    PAGEUP          RETURN          RIGHT
+    SHIFT_F1        SHIFT_F10       SHIFT_F11       SHIFT_F12
+    SHIFT_F2        SHIFT_F3        SHIFT_F4        SHIFT_F5
+    SHIFT_F6        SHIFT_F7        SHIFT_F8        SHIFT_F9
+    SHIFT_TAB       SPACE           TAB             UP
+    ALT_0           ALT_1           ALT_2           ALT_3
+    ALT_4           ALT_5           ALT_6           ALT_7
+    ALT_8           ALT_9           ALT_A           ALT_B
+    ALT_BACKSLASH   ALT_BACKSPACE   ALT_C           ALT_COMMA
+    ALT_D           ALT_DEL         ALT_DOWN        ALT_E
+    ALT_END         ALT_EQUAL       ALT_ESC         ALT_F
+    ALT_F1          ALT_F10         ALT_F11         ALT_F12
+    ALT_F2          ALT_F3          ALT_F4          ALT_F5
+    ALT_F6          ALT_F7          ALT_F8          ALT_F9
+    ALT_G           ALT_H           ALT_HOME        ALT_I
+    ALT_INS         ALT_J           ALT_K           ALT_L
+    ALT_LEFT        ALT_LEFT_BRACKET                ALT_LEFT_QUOTE
+    ALT_M           ALT_MINUS       ALT_N           ALT_O
+    ALT_P           ALT_PAD_ASTERISK                ALT_PAD_ENTER
+    ALT_PAD_MINUS   ALT_PAD_PLUS    ALT_PAD_SLASH   ALT_PAGEDOWN
+    ALT_PAGEUP      ALT_PERIOD      ALT_Q           ALT_R
+    ALT_RETURN      ALT_RIGHT       ALT_RIGHT_BRACKET
+    ALT_RIGHT_QUOTE ALT_S           ALT_SEMICOLON   ALT_SLASH
+    ALT_SPACE       ALT_T           ALT_TAB         ALT_U
+    ALT_UP          ALT_V           ALT_W           ALT_X
+    ALT_Y           ALT_Z           BACKSPACE
+
+Instead of keyname, you can write asciicode or scancode+256
+
+about Function-names, refer key-bindings.[xxxx] is FUNCNAME
+
+for instance
+
+    bindkey ctrl_h back_and_erase
+    bindkey ctrl_s previous xscript:previous
+
+cd
+--
+
+    cd [--basedir] [DIRECTORY-NAME]
+
+  * When DIRECTORY-NAME has a drive-letter, change drive to there.
+  * Forward-slash is same as back-slash.
+  * Without DIRECTORY-NAME, change the current directory to the home directory.
+  * '-' means the previous directory.
+  * Postfix '/' or '\' is ignored.
+  * 'cd --basedir XXX' same as 'cd `basedir XXX`'
+  * able to change directory pointed shortcut(*.lnk) file.
+
+cls
+---
+
+clear screen.
+
+dirs
+----
+
+Display the directory-stack.
+
+eval
+----
+
+Execute parameters as command line.
+
+folder
+------
+
+bind direcotory as ~xxxxx.
+
+    folder SPECIAL-FOLDER-NAME REAL-DIRECTORY-NAME
+
+for instance:
+
+    [c:\] folder prog "C:\Program files"
+    [c:\] cd ~prog
+    [c:\Program Files] pwd
+    c:\Program Files
+
+Default:(Only NYACUS)
+
+    REPLACE FROM       TO
+    ~desktop           Your desktop
+    ~sendto            Your Sendto
+    ~startmenu         StartMenu root
+    ~startup           StartUp in StartMenu
+    ~mydocuments       Your 'My Document'
+    ~favorites         Favorites
+    ~programs          Program Menu in StartMenu
+    ~program_files     Program Files
+    ~appdata           Application Data
+    ~allusersdesktop   All Users' Desktop
+    ~allusersprograms  All Users' Program Menu
+    ~allusersstartmenu All Users' StartMenu
+    ~allusersstartup   All Users' Startup in StartMenu.
+
+foreach ... end
+---------------
+
+    foreach var X1 X2 X3
+       echo $var
+    end
+
+To
+
+    echo X1
+    echo X2
+    echo X3
+
+history
+-------
+
+    history [N]
+
+command-line history.
+
+if
+--
+
+    if CONDITION COMMAND
+
+or
+
+    if CONDITION then
+        :
+    [else]
+        :
+    endif
+
+CONDITION :=
+
+  * arg1 [S: arg2
+  * not arg1 :S] arg2
+  * arg1 -eq arg2 ( arg1 == arg2 as number )
+  * arg1 -ne arg2 ( arg1 != arg2 as number )
+  * arg1 -lt arg2 ( arg1 < arg2 )
+  * arg1 -gt arg2 ( arg1 > arg2 )
+  * arg1 -le arg2 ( arg1 <= arg2 )
+  * arg1 -ge arg2 ( arg1 >= arg2 )
+  * errorlevel N
+  * not errorlevel N
+
+ls
+--
+
+built-in ls(list)
+
+    ls [OPTION] [FILENAMES]
+    list [OPTION] [FILENAMES]
+
+option usage
+    -a all files including files starting with dot and underscore, and attributed hidden.
+    -l long format
+    -1 list one file per line
+    -x list entries by lines instead of by columns
+    -R recursively
+    -t sort by update-date.
+    -r sort reversely
+    -S sort by size.
+    -h with -l, print sizes in human readable format (e.g., 1K 234M 2G)
+    --si likewise, but use powers of 1000 not 1024
+
+    --color
+    --color=always  print with color always
+    --color=never   do not print with color
+    --color=auto    decide whether with or without color, with redirected or not
+
+Colors are customized with the environment variable LS_COLORS.
+
+    option ls_colors x1=v1:x2=v2:x3=v3Åc
+        OR
+    set LS_COLORS=x1=v1:x2=v2:x3=v3Åc
+
+    x1 | usage                 | default
+    ---+-----------------------+---------
+    fi | Plane file            | 37;1
+    di | Directory             | 32;1
+    sy | System File           | 31
+    ro | Read Only File        | 34
+    hi | Hidden File           | 33;1
+    ex | Executable File       | 35;1
+    ec | Screen Initiate code  | 0
+
+    for instance:
+
+        set LS_COLORS="fi=37;1:di=32;1:sy=31"
+
+lua_e
+-----
+
+    lua_e "LUA-CODEs"
+
+execute lua-code with built-in lua interpretor.
+
+
+open
+----
+
+    open -/+ACTION FILENAME
+
+(Windows)
+    OPTION          | USAGE
+    ----------------+----------------------------------------
+    -o OR +open     | Open FILENAME with default application.
+    -e OR +explore  | Open FILENAME with Explorer.
+    -p OR +property | Open Shortcut's property.
+(OS/2)
+    OPTION          | USAGE
+    ----------------+----------------------------------------
+    -o OR +default  | Open FILENAME with default application.
+    -p OR +settings | Open Property
+    +icon           | Open ICON view
+    -e OR +tree     | Open TREE view
+    +detail         | Open DETAIL view
+
+option
+------
+
+Assign value to nyaos's variables.
+They are able to be access with Lua code through lua-table: nyaos.option[].
+
+    > option VARNAME VALUE
+    OR
+    > option VARNAME=VALUE
+
+        set VALUE into variable VARNAME
+
+    > option VARNAME
+
+        print the value of VARNAME
+
+    > option +VARNAME
+
+        set empty value "" into variable VARNAME.
+
+    > option -VARNAME
+
+        erase VARNAME
+
+There are these option's variables.
+
+backquote
+    'option +backquote' enable to command substitution with backquote.
+bracexp
+    'option +bracexp' enable to expand brace expansion.
+debug
+    debug option
+dots
+    For DOS and OS/2. Its enabel to substitute below :
+    ... -> ..\..
+    .... -> ..\..\..
+glob
+    enable filename expansion with wildcards like bash.
+ls_colors
+    define color on ls command.
+    See also ls's seciton.
+lnkexp (Windows)
+    At filename completion, substitute shortcut to the linked target.
+mineditwidth
+    When (the size of screen) - (the length of prompt) is less
+    than this value, output CRLF before prompt.
+multilinequote
+    With this, you can insert CRLF between double-quotes.
+nullcomplete
+    With this, you can complete filename with 0-charactor.
+nyatype
+    always set 'NYAOS3K'
+history
+    enable history substitution with letter '!'
+historyfilesize
+    size of the number of history to save. Empty means all.
+prompt
+    equals to environment variable's.
+prefixdollar
+    enable to substitute $VAR and ${VAR} to its value.
+savehist
+    filename to save history.
+term_clear
+    redefine escape-sequence to screen clear.
+    This variable is for VimShell.
+    Undefined, it equals to '$e[2J'.
+term_color_on
+    redefine escape-sequence to force cursor's blink on.
+    This variable is for VimShell.
+    Undefined, it equals to '$e[$g5l'.
+tilde
+    substitute '~' to the value of the environment variable HOME.
+    When %HOME% == c:\foo,
+    ~/bar -> c:/foo/bar
+    ~\bar -> c:\foo\bar
+uncompletechar
+    At filename completion, nyacus recognize the letter included
+    %uncompletechar% not used in filename like white spaces.
+width
+    If you change screen width, please set it into this option.
+
+
+popd
+----
+
+Change current working directory to the top of the directory stack.
+
+    > popd
+
+change the current working directory to the top one of the directory stack.
+
+    > pop +N
+
+change the current working directory to the N-th one of the directory stack.
+
+
+pushd
+-----
+
+    pushd {-h|-H} {DIRECTORY-NAME|+N}
+
+Push the current working directory onto the directory stack,
+and change the current working directory to the parametor's one.
+Without DIRECTORY-NAME, swap the top of directory stack and the
+current working directory.
+
+pushd DIRNAME
+    save the current working directory to the directory stack and move to
+    DIRNAME.
+pushd +N (N is number)
+    exchange the current working directory with the N-th of the directory
+    stack.
+pushd -h DIRECTORY
+    If the directory stack is empty, and DIRECTORY is not given, do the same
+    behavior with 'push .'
+pushd -H DIRECTORY
+    If DIRECTORY is not given, do the same behavior with 'push .'
+
+
+pwd
+---
+
+print current working directory.
+
+
+set
+---
+
+set ENVNAME=VALUE
+    set environment variable ENVNAME the value of VALUE.
+    compatible to CMD.EXE. Double-quotation is inserted as is.
+set ENVNAME:=VALUE
+    set environment variable ENVNAME the value of VALUE.
+    One double-quotation is ignored and two double-quotations
+    are converted to one double-quotation.
+set ENVNAME=
+    erase variable ENVNAME. same as CMD.EXE/COMMAND.COM
+set ENVNAME+=VALUE
+    If %ENVNAME% does not have VALUE, do 'set ENVNAME=VALUE;%ENVNAME%'.
+    One double-quotation is ignored and two double-quotations
+    are converted to one double-quotation.
+
+for instance:
+
+(1)
+
+    [C:\] set PATH=C:\Windows;C:\Borland\bcc55
+    [C:\] set PATH+=C:\lsic\bin
+    [C:\] set PATH+="C:\Program Files\bin"
+    [C:\] echo %PATH%
+    C:\Program Files\bin;C:\lsic\bin;C:\Windows;C:\Borland\bcc55
+
+(2)
+
+    [C:\] set PATH=C:\Windows;C:\Borland\bcc55
+    [C:\] set PATH+=C:\Borland\bcc55
+    [C:\] echo %PATH%
+    C:\Borland\bcc55;C:\Windows
+    ('set' replaced the position of 'C:\Borland\bcc55'.)
+
+    set ENVNAME-=VALUE
+
+Remove VALUE from %ENVNAME%.
+One double-quotation is ignored and two double-quotations
+are converted to one double-quotation.
+
+for instance.
+
+    [C:\] set PATH=C:\Windows;C:\Borland\bcc55
+    [C:\] set PATH-=C:\Windows
+    [C:\] echo %PATH%
+    C:\Borland\bcc55
+
+source
+------
+
+    source FILENAME
+
+Read and execute commands from FILENAME.
+Calling batch files(*.BAT,*.CMD) without 'source', nyaos could not
+find environment-variables' change.
+
+When FILENAME's suffix is .lua or .luac , and its contents start
+with '--', NYAOS executes it as Lua-code.
+
+    source -h FILENAME
+
+Read commands from FILENAME and insert them into the history list.
+
+
+
+suffix
+------
+
+    suffix SUFFIX INTERPRETOR
+    OR
+    suffix SUFFIX=INTERPRETOR
+
+Associate SUFFIX with INTERPRETOR.
+
+        [C:\] suffix pl perl
+        [C:\] hoge.pl
+    => equals to 'perl hoge.pl'
+
+  * SUFFIX must not have period.
+  * Files whose name has .SUFFIX are put into list for the command name
+    completion.
+  * Instead of INTERPRETOR, we can write sentence using macros like alias.
+
+        [C:\] suffix lua "lua $0 $*"
+    
+
+unalias
+-------
+
+    unalias ALIAS
+
+Remove ALIAS from the aliases list.
+
+unsuffix
+--------
+
+    unsuffix SUFFIX
+
+Remove SUFFIX from the suffixes list.
+
+unoption
+--------
+
+    unoption
+
+Remove OPTION from the option list.
+
+
+COMMAND SEPARETORS
+==================
+
+- ' ;' (one space and semicolon)
+
+        A.exe ; B.exe
+
+    Execute A.exe and B.exe sequentially.
+
+- '&'
+
+       A.exe & B.exe
+
+    Execute a.exe on background like bash.
+
+
+
+HISTORY EXPANSION
+=================
+
+Command 'option +history' enable this expansion.
+
+    Mark   |                  Usage
+    -------+----------------------------------------------
+    !!     | previous commandline string all.
+    !N     | the N-th commandline of the history.
+    !-N    | the N-th previous commandline of the history.
+    !str   | string beginning with `str'.
+    !?str? | string including `str'.
+
+These suffixes can modify history expansion behavior.
+
+    Mark |      Usage
+    -----+---------------------
+    :0   | command name
+    :N   | the N-th argument
+    ^    | the first argument
+    $    | the last argument
+    *    | all arguments
+
+
+
+REDIRECT of STDERR
+==================
+
+    2> FILENAME
+        switch standard-error-output to write FILENAME.
+    2>> FILENAME
+        switch standard-error-output to append FILENAME.
+    2>&1
+        switch standard-error-output to standard output
+    2>&-
+        drop the contents of standard-error-output. It equals to `2>nul'.
+    COMMAND1 |& COMMAND2
+        link COMMAND2's standard-input with both COMMAND1's standard-output and
+        standard-error-output.
+
+Caution:
+    To redirect standard output and standard-error-output to the same file, do:
+        COMMAND >FILENAME 2>&1
+
+    Doing
+        COMMAND 2>&1 >FILENAME
+    FILENAME includes only COMMAND's standard-output.
+
+
+COMMAND SUBSTITUTION
+====================
+
+With `option +backquote', replace `COMMAND ARGUMENTS..` to the strings which
+they output at executing.
+
+For instance:
+
+To back up all files under the current working directory.
+
+    [C:work] $ option +backquote
+    [C:work] $ foreach i `dir /b /s`
+    [C:work] $    copy %i% %i%-backup
+    [C:work] $ end
+
+Double backquotes `` are replaced to one backquote ` between backquotes.
+
+    [C:work] $ echo `echo 1``2`
+    1`2
+    [C:work]
+
+To diable replacing, do 'option -backquote'.
+
+
+ENVIRONMENT VARIABLE
+====================
+
+%VARNAME% format like DOS or $VARNAME and ${VARNAME} format like UNIX was
+replaced to the value of the environment variable VARNAME. And some operators
+were provided as below.
+
+    %VARNAME.defined% or ${VARNAME.defined}
+        replaced to one of belows.
+          * 1 when VARNAME was set as the command 'option'
+          * 2 when VARNAME was set as the environment variable name.
+          * 0 when VARNAME was not set as any variable.
+
+    %VARNAME.length%  or  ${VARNAME.length}
+        replace to the length of the variable.
+
+    %VARNAME.split%   or ${VARIABLE.split}
+        substitution ';' in the value of the variable to one space.
+
+    %VARNAME/FROM/TO%  or  ${VARNAME/FROM/TO}
+        substitution the string:FROM in the value of the value to string:TO
+
+
+EXTENDED PROMPT
+=======================
+
+Static prompt
+-------------
+
+    for instance,
+    with option statement:
+        > option prompt $e[31;40;1m[$w]$_$$ $e[37;1m
+    with set statemtn
+        > set prompt=$e[31;40;1m[$w]$_$$ $e[37;1m
+
+Diffences from CMD.EXE's one is below:
+
+    Only NYAOS 
+
+        $W  | the last part of the current directory. 
+            | For example, the current directory is c:\foo\bar,
+            | $W was replaced to 'c:bar'.
+            |
+        $Wn | the last n-part of the current directory.
+            | For example, the current directory is c:\foo\bar\gar,
+            | $W2 was replaced to 'c:...\bar\gar'.
+
+    NYAOS does not understand $+,$M(Windows),$I(OS/2)
+
+Dynamic prompt by Lua
+---------------------
+    To define lua function 'nyaos.propmt', you can change prompt 
+    dynamically.
+
+        The first argument:
+            same as %PROMPT%
+        The first return value:
+            When nil:
+                Function's results are ignored and eval %PROMPT% 
+            When true:
+                The second return value are printed as prompt.
+                Macro-strings inside are expanded.
+            When false:
+                The second return value are printed as prompt.
+                Macro-strings inside are not expanded.
+        The second return value:
+            set string to print as prompt.
+
+    for example:
+        lua_e "
+            function nyaos.prompt(p)
+                return true,'('..(nyaos.option.errorlevel or 0)..')\n'..p
+            end
+        "
+        
+        Print result value of previous executed commands as prompt.
+
+
+WINDOW TITLE
+============
+
+You can change window title with Lua-function, environment-variable,
+or option statement.
+
+Lua-function
+------------
+
+    lua_e "
+        function nyaos.title()
+            return false,'TITLE-STRING'
+        end
+    "
+
+To change 'false' to 'true', you can use macros like %PROMPT%.
+
+
+Environment-variable
+--------------------
+    set TITLE=TITLE-STRING
+
+option statement
+----------------
+    option title TITLE-STRING
+
+
+MULTI-LINE-STATEMENT
+====================
+
+'^' on the terminate of the line and not closed '"' mean 
+the command continued to the next line.
+
+
+
+FUNCTION
+========
+
+Function was available.
+
+    FUNCTIONNAME{
+        COMMAND1
+        COMMAND2
+            ;
+        COMMANDn
+    }
+
+  * Don't insert space between FUNCTIONNAME and brace-mark '{'
+  * Parameters can be able to be refered with %1,%2..%*, $1...$9,$*.
+  * To list functions, type '{}' only.
+  * To remove function, type 'FUNCTIONNAME{}'.(define as empty function)
+
+For example
+
+    which{
+        foreach dir . ${PATH.split}
+            foreach ext .com .exe .bat .cmd
+                if exist %dir%\%1%ext% then
+                    echo found %dir%\%1%ext%
+                endif
+            end
+        end
+    }
+
+    [D:nya]which nyados
+    found .\nyados.exe
+    found C:\usr\bin\nyados.exe
+    [D:nya]
+
+ROLLUP/DOWN-SCREEN(Windows)
+============================
+
+When CTRL-UP or Ctrl-] was typed, the ROLLUP/DOWN-mode begins. Key-bindindings.
+
+    LEFT Ctrl-B (xscript:backward)
+        move cursor left.
+    UP Ctrl-P (xscript:previous)
+        move cursor up.
+    RIGHT Ctrl-F (xscript:forward)
+        move cursor right
+    DOWN Ctrl-N (xscript:next)
+        move cursor down.
+    Home Ctrl-A (xscript:head)
+        move cursor onto the left edge of screen.
+    End Ctrl-E (xscript:tail)
+        move cursor onto the right edge of screen.
+    PGUP Ctrl-Z (xscript:previous-page)
+        move cursor one page of screen up.
+    PGDN Ctrl-V (xscript:next-page)
+        move cursor one page of screen down.
+    Ctrl-Home (xscript:heaven)
+        move cursor onto the first line.
+    Ctrl-End (xscript:earth)
+        move cursor onto the last line.
+    Shift
+        start the mode to select the rectangle area.
+    Enter (xscript:copy)
+        Yank the current rectangle area the to the clipboard.
+    Escape (xscript:leave)
+        quit.
+
+Key-bindings are customizable with bindkey command.
+
+for example.
+
+    bindkey CTRL_E xscript:previous
+    bindkey CTRL_S xscript:backward
+    bindkey CTRL_D xscript:forward
+    bindkey CTRL_X xscript:next
+
+EMULATION OF ESCAPE SEQUENCE.
+=============================
+
+In WindowsNT/2000/XP, NYACUS emurates the escape-sequence controling to change
+cursor-color and position.
+
+    ESC [<ps>;Åc;<ps>m
+
+    <ps> | 
+    -----+------------------------------
+    30   | Foreground-color to black
+    40   | Background-color to black
+    0    | Initializing.
+    1    | High color
+    31   | Foreground-color to red
+    32   | Foreground-color to green
+    33   | Foreground-color to yellow
+    34   | Foreground-color to blue
+    35   | Foreground-color to purple
+    36   | Foreground-color to light-blue
+    37   | Foreground-color to white
+    39   | Foreground-color to default (Only Windows)
+    41   | Background-color to red
+    42   | Background-color to green
+    43   | Background-color to yellow
+    44   | Background-color to blue
+    45   | Background-color to purple
+    46   | Background-color to light-blue
+    47   | Background-color to white
+    49   | Background-color to default (Only Windows)
+
+    ESC [2J  cleaning screen
+    ESC [>5l drawing cursor on
+
+HERE DOCUMENT
+=============
+
+The string the command read from standard-input can be written in source like this.
+
+    COMMAND <<KEYWORD
+        LINE-1
+        LINE-2
+        LINE-3
+            :
+        LINE-n
+    KEYWORD
+
+LINE-1 to n was into the standard-input of COMMAND. When KEYWORD are not quoted,
+%...% will be expanded the value of the environment variables.
+
+
+HERE TEMPORARY FILE
+===================
+
+    COMMAND <<=KEYWORD
+        LINE-1
+        LINE-2
+        LINE-3
+            :
+        LINE-n
+    KEYWORD
+
+NYAOS creates temporary file includes LINE-1 to LINE-n and replace '<<=KEYWORD' to
+the temporary file's name.
+
+
+HOW TO BUILD NYAOS FROM SOURCE
+==============================
+
+Required these tools
+
+    (Windows)
+        - mingw32-gcc.exe (GCC) 3.4.5 or later
+        - Lua 5.2.1
+    (OS/2)
+        - emx/gcc 0.9d FIX 3 or later
+        - GNU Make
+        - Lua 5.2.1
+
+(1) Build the Lua
+        cd /path/to/lua-5.2.1
+        make generic
+(2) Build the NYAOS
+        cd /path/to/nyaos3k
+        make LUAPATH=(LUA's PATH)
+
+
+Extension with Lua
+==================
+
+Table-like objects
+------------------
+
+  * nyaos.alias
+  * nyaos.option
+  * nyaos.suffix
+  * nyaos.folder
+  * nyaos.functions
+  * nyaos.argv
+
+nyaos.XXXXX is the interface of ''XXXXX'.
+Except for nyaos.functions, we can change its value.
+
+lua_e "
+    nyaos.alias['cp'] = 'cmd /c copy'
+    print('cp='..nyaos.alias['cp'])
+    for key,val in pairs(nyaos.alias) do
+        print(key..'='..val)
+    end
+"
+
+History/dirstack object
+-----------------------
+
+  * nyaos.history
+      + which is the interface for history
+  * nyaos.dirstack
+      + whici is the interface for pushd/popd/dirs
+
+lua_e "
+  local h=nyaos.history
+  for i=1,#h do
+    print(i,h[i])
+  end
+"
+
+lua_e "for i,e in ipairs(nyaos.history) do print(i,e) end"
+
+- add string to history
+
+    nyaos.history:add('hogehoge')
+
+- drop string from history
+
+    nyaos.history:drop()
+
+ Calling Lua functions as an internal command in nyaos
+
+nyaos.command.xxxxx
+-------------------
+
+When called with
+
+    COMMANDNAME X Y Z > foo.txt
+
+Lua function is called like:
+
+    nyaos.command.COMMANDNAME('X','Y','Z')
+
+and redirected to 'foo.txt'.
+
+nyaos.command2.yyyyyyyy
+-----------------------
+
+When called with
+
+    COMMANDNAME X Y Z > foo.txt
+
+Lua function is called like:
+
+    nyaos.command2.COMMANDNAME('X Y Z > foo.txt')
+
+Lua's return value of function is translated as below
+
+  * Number => not changed
+  * false => 1
+  * true,nil,others => 0
+
+
+Command-line filter
+-------------------
+
+The function nyaos.filter can rewrite the text user input on command-line.
+
+Example in _nya:
+
+lua_e "
+    function nyaos.filter(cmdline)
+        return cmdline:gsub('%%(%b())',function(m)
+            return loadstring('return '..m)()
+        end)
+    end
+"
+
+you can do:
+
+[c:nyaos3k]
+$ echo %(1+2+3)
+6
+
+nyaos.filter.xxxxx are called order by xxxxx's ascii-code.
+
+nyaos.filter2 is like nyaos.filter but its parameter is the commandline after
+alias and suffix are extracted.
+
+
+external command-call hook
+--------------------------
+
+Define nyaos.filter3.xxxxx, You can modify parameters at call external
+command with CreateProcess(Windows) or DosExecPgm(OS/2).
+
+`nyaos.filter3.xxxxx' gets two parameter and returns same two.
+The first one is command-name and the second one is full-command-line. 
+To return nothing means not to change command-name and parameter.
+
+This source below is sample to realize shebang like Linux/UNIX.
+
+    function drop_first_token( s )
+        for i=1,string.len(s) do
+            if string.sub(s,i,i) == ' ' then
+                return string.sub(s,i)
+            end
+        end
+        return ''
+    end
+
+    function nyaos.filter3.shebang( name , param )
+        local suffix = string.lower( string.sub( name , #name - 3 ) )
+        if suffix ~= '.exe' and suffix ~= '.com' then
+            local fd=io.open( name , 'r' )
+            local line=fd:read()
+            fd:close()
+            if string.sub(line,1,2)=='#!' then
+                local interpretor = string.sub(line,3)
+                local new_param = interpretor .. ' ' .. name .. ' ' .. drop_first_token( param )
+                return interpretor , new_param
+            end
+        end
+    end
+
+
+Keyboard-hook
+-------------
+
+NYAOS calls the function nyaos.keyhook.xxxxx everytime user types key.
+
+Example in _nya:
+
+    lua_e "
+        function nyaos.keyhook.date(t)
+            if t.key == nyaos.key.F11 then
+                return os.date('%Y%m%d')
+            end
+        end
+        function nyaos.keyhook.time(t)
+            if t.key == nyaos.key.F12 then
+                return os.date('%H%M%S')
+            end
+        end
+    "
+
+Type F11, and insert date(YYYYMMDD). Type F12, ans insert time(HHMMDD)
+
+The function nyaos.keyhook's spec is below
+
+  * Arguments:
+      + t.key : keycode
+      + t.text : commandline-text
+      + t.pos : cursor's position on text
+  * return values:
+      + nil : no effort. nyaos nterprets only user-typed-key.
+      + string : insert it into cursor's position
+      + integer : interpret it as key-code
+      + true : same as ENTER
+      + false : same as Ctrl-C
+      + table : eval elements of it from 1st one.
+
+ Key-code constants
+
+Please check with the below code:
+
+lua_e "
+    for key,val in pairs(nyaos.key) do
+        print('nyaos.key.'..key..'='..val)
+    end
+"
+
+Hook at exit
+------------
+
+Defined function in the table nyaos.goodbye, NYAOS calls it at exit.
+
+for instance:
+
+    lua_e "nyaos.goodbye.message = function() print 'GOOD-BYE' end"
+
+Completion Hook
+---------------
+
+    function nyaos.complete(BASESTRING,POSITION,MISC)
+        :
+        return LIST
+    end
+
+  * BASESTRING
+      + The string to be completed when TAB is typed.
+  * POSITION
+      + The postion of BASESTRING on the command-line. Then it is 0 ,
+        completion should include command names.
+  * MISC
+      + MISC.text
+          o All the command-line string
+      + MISC.cursor
+          o The postion of cursor.
+  * LIST
+      + return-value.
+          o LIST[n][1] or LIST[n]
+              # string for completion
+          o LIST[n][2]
+              # string for listing
+
+for instance:
+
+    lua_e "
+        function nyaos.complete(basestring,n)
+            local list = nyaos.default_complete(basestring,n)
+            table.insert( list , '127.0.0.1' )
+            table.insert( list , 'localhost' )
+            return list
+        end
+    "
+
+nyaos.default_complete is built-in function which does NYAOS's default
+completion.
+
+nyaos.default_complete always returns
+
+    {
+        { "FULLPATH-1" , "FILENAME-1 without DIRECTORY" } ,
+        { "FULLPATH-2" , "FILENAME-2 without DIRECTORY" } ,
+        { "FULLPATH-3" , "FILENAME-3 without DIRECTORY" } ,
+        { "FULLPATH-4" , "FILENAME-4 without DIRECTORY" } ,
+    }
+
+nyaos.default_complete does not use the third argument.
+
+Tools
+-----
+
+- nyaos.create_object - create new COM-Object (only on Windows)
+
+    local word=nyaos.create_object("Word.Application")
+    word.Visible = true
+    word.documents:Add()
+    word.Selection.Font.Size = 28
+    word.Selection:typetext("Hello,World")
+
+- nyaos.get_active_object - call running COM-Object (only on Windows)
+
+    local word=nyaos.get_active_object("Word.Application")
+    word:Quit()
+
+- COMObject.__const__ - load constraints from COM (only on Windows)
+
+    local excel = nyaos.create_object('Excel.Application')
+    for key,val in pairs(excel.__const__) do
+        print(key .. "=>" .. val , type(val))
+    end
+
+- COMObject:__iter__ - enumerate the items in collection of COMObject
+  (only on Windows)
+
+    local shell = nyaos.create_object("WScript.Shell")
+    for e in shell.SpecialFolders:__iter__() do
+        print(e)
+    end
+
+- COMObject:__put__ - set property of COMObject (only on Windows)
+
+    local shell=nyaos.create_object("WScript.Shell")
+    local sysEnv=shell:Environment("System")
+    -- instead of sysEnv:Item("VARNAME") = "VALUE"
+    sysEnv:__put__("Item","VARNAME","VALUE")
+
+- nyaos.getkey() - get keycode typed
+
+    lua_e "print(nyaos.getkey())"
+
+- nyaos.goodbye() - hook at exit
+
+    lua_e "nyaos.goodbye = function() print 'SAYONARA' end"
+
+- nyaos.rcfname - current runnning codefilename
+
+    In _nya :
+        print('Loading ' .. nyaos.rcfname)
+
+- nyaos.pid - current runnning nyaos's process-id
+
+- nyaos.version - NYAOS's version string.
+
+Execute NYAOS-command in Lua-code
+----------------------------------
+
+lua_e "nyaos.exec('ls -l')"
+
+ Test whether the file exists or not.
+
+lua_e "print( nyaos.access('_nya',0) )"
+
+
+Quote NYAOS-command output
+--------------------------
+
+    lua_e "
+        local quote=nyaos.eval('ls -1')
+        for fn in string.gmatch(quote,'[^\n]+') do
+            print(fn)
+        end
+    "
+
+
+Test file existance.
+--------------------
+
+lua_e "print( nyaos.access('_nya',0) )"
+
+
+io.write with escape-sequence emulation
+---------------------------------------
+
+    lua_e "nyaos.write('\027[32mHOGE\n')"
+
+print green HOGE.
+
+
+setting environment variable
+----------------------------
+
+    lua_e "nyaos.putenv(VARNAME,VALUE)"
+
+When VALUE is nil, erase variable.
+
+
+File/Directory Operation
+------------------------
+
+* nyaos.filefind - read files' information matching a wildcard.
+
+    lua_e "
+      for info in nyaos.filefind('c:/*') do
+        print( ('%s%s%s%s %12d %04d/%02d/%02d %02d:%02d:%02d %s'):format(
+                    info.directory and 'D' or '-' ,
+                    info.hidden    and 'H' or '-' ,
+                    info.system    and 'S' or '-' ,
+                    info.readonly  and 'R' or '-' ,
+                    info.size ,
+                    info.year , info.month , info.day ,
+                    info.hour , info.minute , info.second ,
+                    info.name ) )
+      end
+    "
+
+* nyaos.dir - read filelist of a directory
+
+    lua_e "
+        for fn in nyaos.dir('.') do
+            print(fn)
+        end
+    "
+
+* nyaos.stat - get information about a file.
+
+    lua_e "stat=nyaos.stat('_nya') ; print( stat.size )"
+
+    When the file does not exist, return nil.
+
+* nyaos.chdir - change the current working directory
+
+    lua_e "status,errmsg = nyaos.chdir('..')"
+
+    At succeeding, status is 0
+    At failure , status is not 0 and errmsg has an error message.
+
+* nyaos.mkdir - make a directory
+
+    lua_e "status,errmsg = nyaos.mkdir('HOGE')"
+
+    At succeeding, status is 0
+    At failure , status is not 0 and errmsg has an error message.
+    
+
+* nyaos.rmdir - remove a directory
+
+    lua_e "status,errmsg = nyaos.rmdir('HOGE')"
+
+    At succeeding, status is 0
+    At failure , status is not 0 and errmsg has an error message.
+
+* nyaos.currentdir - get the current working directory
+
+    lua_e "print(nyaos.currentdir())"
+
+* nyaos.sub
+
+    The DBCS version of string.sub
+
+* nyaos.len
+
+    The DBCS version of string.len
+
+History
+=======
+
+3.3.8_0 (2013/05/03)
+    - Fixed: Could not assign functions with the `bindkey' command to 
+      some keys for example CTRL_LEFT,CTRL_RIGTH and so on.
+    - Fixed: Once Lua-function assigned to nyaos.keyhook returns nil,
+      no Lua-function assigned key did not work.
+    - New Lua function: nyaos.currentdir()
+    - The width for the file size on `ls -l' is automatically changed. (*)
+    - ls's new option: -h,--si (*)
+    (* Thanks to Mr.Akinori Hattori's codes!)
+
+3.3.7_1 (2013/04/23)
+    - Fixed: The Window's title text was not updated at changing 
+      drive with `X:' (Windows)
+
+3.3.7_0 (2013/03/31)
+    - Since COMObject:Item("key")=val is not available,
+      provide COMObject:__put__("Item","key",val)
+    - Be able to enumerate the items in collection of COM-object
+      (ex: for e in COMObject:__iter__() do ... end )
+    - Be able to load COM's constraints with COMObject.__const__
+      (same as nyaos.const_load which was removed from documents)
+
+3.3.6_1 (2013/03/01)
+    - Fixed: "ls -l | more" did not print with the long format.
+    - Fixed: Crashed at executing 'con' or 'prn'
+
+3.3.6_0 (2013/02/24)
+    - Support DBCS String literal on builtin-Lua.
+    - Add nyaos.sub/len : DBCS version of Lua's string.sub/len
+    - Remove nyaos.splitknj function
+    - Move some functions from _nya to _nya.d\*
+    - [OS/2] Now emx.dll are required again because the problem are 
+      found that PM applications can not be called.
+
+3.3.5_1 (2013/02/18)
+    - Fix: Japanese Charactors could not be typed on Windows-8.
+
+3.3.5_0 (2013/02/16)
+    - The ^ is now regarded as the escape charactor like CMD.EXE.
+    - `for' and `assoc' are defined on standard _nya.
+    - Removed the fixed error message when CreateProcess has failed 
+      and the commandline is longer than 111 charactors.
+    - Fix: GOTO did not work.
+    - Fix: Only the functions with names in the lower case can be called.
+    - Cut messages for `command(s) | nyaos.exe'
+
+3.3.4_3 (2013/02/09)
+    - Fix the problen that current directory name became SHORTFILE 
+      NAME(8.3) when do "cd SHORTCUT.lnk".(WINDOWS)
+    - Fix the bug that it does not work to complete a filename of 
+      shortcut after "cd ".(WINDOWS)
+    - Fix the bug that on filename's completing, Filename's case 
+      is not corrected when length of common characters of 
+      complition-list are same as typed characters.
+    - Added the new lua command `lnk' to make shortcut to the 
+      default _nya.(WINDOWS)
+
+3.3.4_2 (2013/02/02)
+    - Fix the problem crashing at calling COM. (WINDOWS)
+    - The version information can be seen in the exe-file's property.
+      (WINDOWS)
+
+3.3.4_1 (2013/01/19)
+    - Fix the problem that Japanese letters are not printed correctly 
+      on builtin-ls and prompt in some Windows-7 environments.
+
+3.3.4_0 (2012/10/14)
+    - Can change Window's title (merge @nocd5's code) (WINDOWS)
+    - build-in cls command.
+    - If ~/_nya and ./_nya are the same file, not load them twice.
+    - Remove warnings at compiling with g++ 4.7.0
+
+3.3.3_1 (2012/06/18)
+    - Fix: freeze at executing the script with `nyaos -f FILENAME'
+      and FILENAME's code is `lua_e "print(io.read())"'
+      (on Windows only)
+
+3.3.3_0 (2012/06/03)
+    - Complete only directory when the command is CD or PUSHD.
+    - Lua: nyaos.const_load() which imports constants from COM
+    - Fix problem: could not execute a batchfile when both the 
+      batchfile's name and argument are enclosed in double-quotation.
+      (for example: "foo.bat" "arg1")
+
+3.3.2_0 (2012/04/30)
+    - Can call COM-Object from built-in Lua
+      (added function: nyaos.create_object , nyaos.get_active_object)
+    - You can write `nyaos foo.lua' as `nyaos -f foo.lua'.
+
+3.3.1_0 (2012/03/02)
+    - Enabled replacing by "suffix" command against result replaced by 
+      "alias" command.
+    - `set foo:="ahaha "" ihihi"' make $foo to `ahaha " ihihi'
+      (`set foo="ahaha "" ihihi"` remains to make $foo to `"ahaha "" ihihi"')
+    - On `set foo= ; set foo+"a""b"', $foo was `ab'. But now it is `a"b'.
+    - Aginst not existing command FOO, two error message ware printed as:
+      `FOO: No such file or directory' and `FOO: Bad file descriptor'.
+      Now, the latter are removed.
+    - add Lua-functin: nyaos.putenv()
+
+3.3.0_3 (2012/02/11)
+    - Fix problem: regarded spaces in %HOME% or %USERPROFILE% as 
+      parameter's separetor at calling program with tilde-charactor. 
+
+3.3.0_2 (2012/01/30)
+    - Suppress the error when the file pointed option savehist is not exists.
+    - It can save history and call nyaos.good.* even if terminal window
+      is closed with button.
+    - Fix the problem to insert unnecessary double quotation on filename
+      completion when the directory name has the charactor whose second
+      byte is included option-uncompletechar.
+    - modify _nya to call mklink via cmd.exe with alias.
+
+3.3.0_1 (2012/01/07)
+    - support bash-like syntax such as `alias foo=bar' on the commands:
+      alias, suffix, option.
+    - fix: nyaos.eval does not work correctly when arguments' command output
+           over 32767 chars.
+
+3.2.0_1 (2012/01/07)
+    - fix: nyaos.eval does not work correctly when arguments' command output
+           over 32767 chars.
+
+3.3.0_0 (2012/01/01)
+    - change Lua-engine version 5.1.4 to 5.2
+    - remove nyaos's own mechanism of pairs and ipairs.
+    - remove nyaos.bitand, bitor, bitxor, rshift, lshift.
+
+3.2.0_0 (2011/09/11)
+    - fix: History numbers are not displayed.
+    - defined on _nya the command 'cmdsource',
+      which loads the batch-file setting environment variables.
+    - append English usage on _nya.
+
+3.1.8_0 (2011/07/10)
+    - OS/2 version does not require emx.dll now.
+
+3.1.7_2 (2011/06/30)
+    [BugFix]
+    - nyaos.history always returned "<NnObject>".
+    - nyaos.history:add did not work.
+
+3.1.7_1 (2011/06/13)
+    [Bugfix]
+    - Records in history were not sorted which have no timestamp.
+    - Same records in history were saved as one record.
+    - It takes time to save history which has a lot of records.
+    (import code from wantora)
+
+3.1.7_0 (2011/06/05)
+    - record time-stamp in history which can print 'history' command.
+    - On saving history, merge it with already saved history order 
+      by time-stamp.
+
+3.1.6_1 (2011/05/24)
+    - Don't crash on using backquote when \ is not allowed 
+      to write on Windows.  
+
+3.1.6_0 (2011/04/30)
+    - On Windows' Escape-sequence emulation, support 
+        ESC[39m (set foreground-color to default one)
+        ESC[49m (set background-color to default one)
+      (import code from @mattn_jp)
+    - Dynamic prompt by Lua function
+
+3.1.5_0 (2011/01/24)
+    - support syntax: %VAR/FROM/TO% , ${VAR/FROM/TO} 
+
+3.1.4_1 (2010/12/20)
+    - Fix: 'nyaos -E "print(nyaos.version,nyaos.argv[0])"' does not 
+      report correct value. (lua_e worked correctly)
+3.1.4_0 (2010/12/11)
+    - Fix: could not complete deep directory like jp/co/example with
+      repeating typing TAB-key
+    - When return-value of nyaos.keyhook.xxxx is table, interpret elements
+      of them.
+    - include version-string in 'nyaos.version' and nyaos-executable-path
+      in 'nyaos.argv[0]'
+
+3.1.3_0 (2010/11/24)
+    - Keys besides ->,<-,^B,^F are able to terminate incremental-search-mode.
+    - nyaos.write(io.write with escape-sequence emulation)
+    - meta charactor $Wn in %PROMPT%
+
+3.1.2_0 (2010/11/11)
+    - treat nyaos.keyhook not only as a function but also 
+      as a table with functions.
+    - call nyaos.filter3.xxxx order by name.
+
+3.1.1_0 (2010/10/24)
+    - make hook as nyaos.filter3.xxxxx
+    - display filename before the error message: 'No Such file or directory'
+
+3.1.0_1 (2010/09/11)
+    - same between 3.0.0_0 and _1
+
+
+3.1.0_0 (2010/08/02)
+    - Not only Japanese, All DBCS Supported.
+    - When stdout is a tty, ls behaves as ls -1.
+    - add option -x to ls.
+    - add Lua function: nyaos.splitknj()
+
+3.0.0_1 (2010/09/11)
+    - Fix: did not replace the environment variable which begins `$' and 
+           includes `_'.
+    - Fix: treated no suffiexed filename as executable.
+    - Fix: searched executables written with relative path though %PATH%.
+    - force static-link libstdc++ With the latest MinGW(20100831).
+    - remove warnings on the latest MinGW(20100831) on history.cpp,keybound.cpp
+
+3.0.0_0 (2010/07/12)
+    - Change command-name search-path from
+            alias -> built-in command -> nyaos.command2(Lua)
+            -> nyaos.command(Lua) -> function -> external command
+      to
+            alias -> function -> nyaos.command2(Lua)
+            -> nyaos.command(Lua) -> built-in command -> external command
+    - able to remove function with 'FUNCTIONNAME{}'
+    - add nyaos.stat , nyaos.filefind , nyaos.mkdir and nyaos.rmdir
+
+2.99_0 (2010/07/03)
+    - When call nyaos.filter.XXXXX, do order by XXXXX
+    - `nyaos.pid' means NYAOS.EXE's process id
+    - On suffix command, can use macros like alias
+    - When -f's parameter ends with .lua or .luac, expect it Lua script.
+    - `nyaos.goodbye' can be table who has functions.
+    - Incremental search with Ctrl-R (patch by Mr.craftware)
+    - Application name is changed from OSes Shell to Open Shell.
+    - add: nyaos.functions as Lua table(readonly)
+
+2.98_0 (2010/06/11)
+    - option +glob: wildcard expansion
+    - can execute to batch-files without suffix(.CMD/.BAT)
+    - command name completion supports commands defined with nyaos.command/
+      commans2
+    - echo `dir | sort` work correctly.
+    - The max charactors quoted with ` is extended from 1024 to 8192.
+    - command '{}' lists functions.
+    - The third argument of nyaos.complete includes all the
+      commandline-string and cursor postion.
+    - append English document(nyaos_en.txt).
+    - rename Japanese document nyaos.txt to nyaos_ja.txt
+    - Bugfix: & and > quoted ` are working as redirect and etc.
+    - Bugfix: Spaces and LF in "`..`" were reduced to one space.
+
+2.97_0 (2010/05/25)
+    - treat nyaos.filter and nyaos.filter2 as table which has functions.
+      (for compatible, nyaos.filter(2) is allowed to be a function.)
+    - called from VimShell, option term_cursor_on set ''.
+
+2.96_0 (2010/05/22)
+    - add: nyaos.command2 , nyaos.filter2 , nyaos.dirstack
+    - del: nyaos.exe's option "-a"
+    - lua_e command support redirect of standard-input
+    - can refer errorlevel with %errorlevel%
+    - can use pairs/ipairs function for nyaos.alias/suffix/option/history/
+      dirstack
+    - nyaos's option "-D" reports compiled date and timing of loading _nya
+    - Bugfix: nyaos aborts when error occurs at executing 'source'.
+
+2.95_0 (2010.05.07)
+    - Intefaces of functions defined on nyaos.command(LUA) are same as
+      built-in commands.
+        * Output Rereirect and pipelines work.
+        * Arguments are split with whitespaces and remove double-quotes.
+    - It is able to stop continued lines with Ctrl-C (Unclosed double-quote
+      , typing foreach on tty )
+    - fix problem: could not call foo.exe when the file foo with no suffix
+      on the same directory.
+
+2.94_0 (2010.04.29)
+    - new Lua function:
+        * nyaos.default_complete
+        * nyaos.eval
+    - change return value of nyaos.complete from several strings to one
+      table including strings.
+    - set option-variable %nyatype% NYAOS3K
+    - 'source' treats files whose siffuxes are .lua or .luac as
+      Lua-scriptes. (accepting compiled binary)
+    - cut message '%0 reading... done' in _nya. But, with -D option,
+      NYAOS.EXE says filenames loading.
+    - can catch CTRL_SPACE (on Windows)
+    - [BugFix] Empty line was inserted into history file with option
+      savehist.
+    - [BugFix] Stop pipelined build-in command, output would not stop. (OS/
+      2)
+
+2.93_0 (2010.04.24)
+    - Lua hook for completion.
+    - HIDDEN,SYSTEM-files' color take priority to DIRECTORY's one.
+    - Print <PROCESS-ID> with '&'
+    - New Icon for Windows (Windows)
+    - IME-toggle-key Ctrl-\ (Windows)
+    - not use temporary files on pipelines from built-in commands' output.
+    - [FIX] Color differed between 'ls' and 'ls -l'
+    - [FIX] Command execution was continued when it's redirect failed.
+
+2.92_1 (2010.04.14)
+    - Fix the problem Lua-object nyaos.filter was not called.
+
+2.91_0 (2010.03.28)
+    - add ls a new option --color which force output colored.
+    - interpret Lua code when script-file begins '--' loaded 'source' and
+      _nya
+    - remove command: list,xptest,echoerr
+    - rename command: print -> echo
+    - (Windows) add nyaos's option -t which disable to control console
+      directly and use ANSI escape sequence.
+
+2.90_1 (2010.03.19)
+    - (OS/2)
+        * Fix: could not execute PM applications.
+
+2.90_0 (2010.03.16)
+    - update Japanese document(nyaos.txt)
+    - assign version number as '2.90_0'
+    - improve packaging script(mkpack.cmd)
+
+nyaos3k-20100315.zip & nyaos3k-os2-20100315.zip
+    - Support OS/2 Warp!
+    - When a build-in command's output to pipeline, emulate pipeline with a
+      temporary file to keep stable.
+
+nyaos3k-20100313.zip
+    - (no change on Windows version)
+    - OS/2 supported. But, does not release OS/2 executable binary because
+      some problems.
+
+nyaos3k-20100310.zip
+    - [BugFix] fix problem that Ctrl-C cound not stop ls and lua_e. (except
+      for pipeline being overflow)
+
+nyaos3k-20100307.zip
+    - [BugFix] fix problem that hang-up after executing "COMMAND |
+       more.com".
+    - remove build-in command sub/endsub
+    - Include improved getch-code support both '‡V' and arrow-keys.(Thank to
+      lukewarm)
+
+nyaos3k-20100306.zip
+    - [BugFix] '&' works same as bash.exe not as CMD.EXE's start commands.
+    - [BugFix] fix problem that it could not call command whose name is
+      enclused with '"' (ex. "C:\Program Files\foo\bar.exe"[Enter]
+
+nyaos3k-20100301.zip
+    - NYAOS.EXE never calls CMD.EXE even if you set option -standalone.
+        * remove option standalone.
+        * CMD.EXE's commands are called only via alias and/or suffix.
+    - lua_e's output can redirect into file or pipeline.
+
+nyaos3k-20100220.zip
+    - _nya:
+        * set alias del and echo to call cmd.exe
+        * save history by Lua
+    - Lua extention:
+        * nyaos.getkey()
+        * nyaos.goodbye() - code called at logoff
+        * nyaos.rcfname - set source filename ($0)
+    - etc
+        * change compiler Cygwin gcc with -mno-cygwin to MinGW32 native gcc
+        * add forgotten source nua.h to repository
+        * does not call upx at building because it is not included in
+          MinGW32.
+
+nyaos3k-20091220.zip
+    - Stop read _nyados, _nyacus
+    - Read all _nya on the directory which NYAOS.EXE exists , %HOME% or
+      %USERPROFILE% and current directory.
+    - Fix: option -r did not work.
+    - Add function on the table nyaos: access, exec, chdir, dir, bitand,
+      bitor, bitxor, rshift, lshift
+    - Add option: -E and -F
+    - Add object: nyaos.history
+    - _nya:
+        * add 'suffix py python ...'
+        * remove some alias which was set for only Hayama.
+
+nyaos3k-20091129.zip
+    - fix: when nyaos.keyhook unset, hanged up.
+
+nyaos3k-20091128.zip
+    - add nyaos.keyhook and nyaos.key
+
+nyaos3k-20091125.zip
+    - fix: cursor-keys did not work. But, be not able to type "‡V" again.
+        * Why cursor-keys' codes and "‡V" begin same the 1byte: 0xE0 ?
+
+nyaos3k-20091121.zip
+    - able to run on teraterm. (but can not edit line like with
+      emacs-key-binding) Thanks to lpproj.
+    - fix: process down when execute 'lua_e "nyaos=nil"'
+    - fix: could not type "‡V"(\u6FA4)
+    - fix: could not use xscript-mode
+
+nyaos3k-20091120.zip
+    - fix: not hang-up standard-in redirected (thanks to lpproj's patch)
+    - fix: version-number '20091115' to '20091120'
+    - fix: not include icon-resource
+
+nyaos3k-20091119.zip
+    - ls: support over 80columns
+    - rename nyaos.properties to nyaos.option
+    - _nya:
+        * append option +standalone
+        * append alias copy cmd /c copy
+
+nyaos3k-20091116.zip
+    - based on NYAOS 2.30_0
+    - add command lua_e.
+    - remove option multilinequote.
+
+
+Distribution
+============
+
+Nihongo Yet Another Open Shell (NYAOS) is the free software.
+You can distribute with GNU General Publice License.
+
+    Download-site:
+        http://www.nyaos.org
+
+    Bug-Report
+        iyahaya@nifty.com
+
+Thanks to...
+
+    Osamu Yamaji        , SNSF              , Takashi Hamamura  ,
+    Hiromitsu Shirahata , AVERAGE           , Mutoh in KANAGAWA ,
+    Takayuki Ganaha     , Takuya Suwa       , Mikihiko Furutate ,
+    BLUEDAY             , Yu Imai           , Kazutaka Mori     ,
+    Kazunori Morishita  , Tomokazu Kiyohara , Goro Fuji         ,
+    Susumu Chida        , UK-Taniyama       , YATO-NO-MORI      ,
+    T.Uchida            , gis_dur           , Soitsu            ,
+    Takeshi Yokobayashi , Christoph Brendes , TEM               ,
+    Hideden             , Lukewarm(sava)    , Masayuki Hayashi  ,
+    thinca              , Shougo            , Saitou            ,
+    craftware           , Dice              , tyru              ,
+    nocd5               , wantora           , mattn(@mattn_jp)  ,
+    Akinori Hattori(@hattya)                , gocho(@gocho)     ,
+    Yohei Endo(@yoheie) , pepperP/Pink(@mugyu) ,
+    Martin Hason        , @orange_clover    , @usaturn          ,
+    @turky              , @kyon_mm          , Gad Brodai        ,
+    Masahiko NAKANISHI  , @rltm             , @laugh_K          ,    
+    @overthestardust    , DeaR(@nayuri_aohime)
+    @h_east
