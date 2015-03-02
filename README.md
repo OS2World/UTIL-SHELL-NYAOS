@@ -3,7 +3,7 @@
 
 LICENSE
 ===============
-* GNU GPL V2
+* Not Specified
 
 COMPILE TOOLS
 ===============
@@ -16,6 +16,6 @@ AUTHORS
 LINKS
 ===============
 * http://www.nyaos.org/
-    https://bitbucket.org/zetamatta/nyaos3000 (nyaos.exe's source )
-    https://bitbucket.org/zetamatta/_nya.d (Lua extensions)
+* https://bitbucket.org/zetamatta/nyaos3000 (nyaos.exe's source )
+* https://bitbucket.org/zetamatta/_nya.d (Lua extensions)
 
